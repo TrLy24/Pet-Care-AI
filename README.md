@@ -1,56 +1,39 @@
-# Welcome to your Expo app 👋
+# Pet-Care-AI
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+Ứng dụng chăm sóc thú cưng tích hợp AI nhận diện giống loài và gợi ý dinh dưỡng.
+Đồ án Capstone, học phần Phát triển ứng dụng di động đa nền tảng (VKU).
 
-## Get started
+## Công nghệ
+- React Native + Expo **SDK 57** + TypeScript + Expo Router
+- Giao diện: react-native-paper (Material 3, có Dark Mode)
+- Kiến trúc: Clean Architecture 3 lớp (domain, data, presentation)
 
-1. Install dependencies
+## Cài đặt
 
-   ```bash
-   npm install
-   ```
+1. Cài Node.js bản LTS (xem số trong `.nvmrc`), Git, VS Code.
+2. Trên điện thoại cài **Expo Go bản mới nhất** (App Store hoặc CH Play).
+3. Mở terminal và chạy lần lượt:
 
-2. Start the app
+        git clone https://github.com/TrLy24/Pet-Care-AI.git
+        cd Pet-Care-AI
+        npm ci
+        npx expo start
 
-   ```bash
-   npx expo start
-   ```
+4. Quét mã QR bằng điện thoại (cùng Wi-Fi với máy tính).
+5. Nếu cần biến môi trường: copy `.env.example` thành `.env` và điền giá trị (hỏi nhóm trưởng). **Không đưa `.env` lên GitHub.**
 
-In the output, you'll find options to open the app in a
+## Cấu trúc thư mục
+- `src/domain`: quy tắc nghiệp vụ, thuần TypeScript, **không import UI hay thư viện ngoài**.
+- `src/data`: lưu và lấy dữ liệu (local, Supabase, AI).
+- `src/presentation`: màn hình, component, theme.
+- `src/di`: nối các lớp lại với nhau.
+- `src/app`: điều hướng (Expo Router), mỗi file chỉ hiển thị một màn hình từ `src/presentation`.
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+Thêm tính năng mới: làm theo mẫu tính năng Pet (entity, repository, usecase, repository cài đặt, screen).
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
-
-```bash
-npm run reset-project
-```
-
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
-
-### Other setup steps
-
-- To set up ESLint for linting, run `npx expo lint`, or follow our guide on ["Using ESLint and Prettier"](https://docs.expo.dev/guides/using-eslint/)
-- If you'd like to set up unit testing, follow our guide on ["Unit Testing with Jest"](https://docs.expo.dev/develop/unit-testing/)
-- Learn more about the TypeScript setup in this template in our guide on ["Using TypeScript"](https://docs.expo.dev/guides/typescript/)
-
-## Learn more
-
-To learn more about developing your project with Expo, look at the following resources:
-
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
-
-## Join the community
-
-Join our community of developers creating universal apps.
-
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+## Quy ước làm việc
+- Không code trực tiếp trên `main`. Mỗi việc một nhánh: `feature/...`, `fix/...`, `docs/...`.
+- Commit viết theo dạng: `feat: ...`, `fix: ...`, `docs: ...`, `chore: ...`.
+- Mọi thay đổi gộp vào `main` qua Pull Request, cần 1 người duyệt.
+- Trước khi tạo Pull Request chạy: `npm run typecheck` và `npm test`.
+- Không đưa `.env`, API key, keystore lên GitHub.
