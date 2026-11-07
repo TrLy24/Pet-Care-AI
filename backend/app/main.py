@@ -5,19 +5,20 @@ from fastapi import FastAPI, File, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from PIL import Image, UnidentifiedImageError
+from starlette.concurrency import run_in_threadpool
 
 from app.schemas.nutrition import NutritionRequest
 from app.services.nutrition_engine import evaluate_nutrition_profile
-from app.services.pet_classifier import predict_pet
+from app.services.pet_classifier import predict_pet, SUPPORTED_SPECIES
 
 
 app = FastAPI(
     title="DACN2 Pet Care API",
     description=(
-        "API nhan dien thu cung bang model da huan luyen "
-        "va danh gia dinh duong theo bo quy tac."
+        "API nhan dien thu cung bang mo hinh phan cap 2 giai doan (5 loai, da giong), "
+        "danh gia dinh duong theo bo quy tac WSAVA va ho tro tu van y khoa AI."
     ),
-    version="0.3.0",
+    version="0.4.0",
 )
 
 app.add_middleware(
@@ -46,6 +47,7 @@ def home():
     return {
         "message": "DACN2 Pet Care API",
         "status": "running",
+        "version": "0.4.0",
         "endpoints": {
             "health": "/health",
             "pet_prediction": "/pet/predict",
@@ -54,10 +56,7 @@ def home():
             "ai_consultation": "/ai/consult",
             "documentation": "/docs",
         },
-        "supported_species": [
-            "dog",
-            "cat",
-        ],
+        "supported_species": SUPPORTED_SPECIES,
     }
 
 
@@ -95,6 +94,14 @@ def ai_consult(req: AIConsultRequest):
 
 @app.post("/pet/predict-base64")
 async def predict_pet_image_base64(payload: Base64PredictRequest):
+    # Gioi han do dai chuoi base64 (~20 MB ky tu tuong duong ~15 MB anh)
+    max_b64_len = 20 * 1024 * 1024
+    if len(payload.image_base64) > max_b64_len:
+        raise HTTPException(
+            status_code=413,
+            detail="Anh base64 vuot qua dung luong toi da 15 MB.",
+        )
+
     raw_b64 = payload.image_base64.strip()
     if "," in raw_b64:
         raw_b64 = raw_b64.split(",", 1)[1]
@@ -121,7 +128,8 @@ async def predict_pet_image_base64(payload: Base64PredictRequest):
             image_format = original.format
             image = original.copy()
 
-        result = predict_pet(image)
+        # Chay mo hinh qua threadpool de tranh block asyncio event loop
+        result = await run_in_threadpool(predict_pet, image)
 
         return {
             "image_format": image_format,
@@ -176,7 +184,8 @@ async def predict_pet_image(
             image_format = original.format
             image = original.copy()
 
-        result = predict_pet(image)
+        # Chay mo hinh qua threadpool de tranh block asyncio event loop
+        result = await run_in_threadpool(predict_pet, image)
 
         return {
             "filename": file.filename,

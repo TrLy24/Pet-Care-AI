@@ -629,7 +629,7 @@ export default function ArticleDetailScreen() {
                   </Text>
                 </View>
                 <Pressable
-                  onPress={() => router.push('/shop')}
+                  onPress={() => router.push('/shop' as any)}
                   style={{ flexDirection: 'row', alignItems: 'center' }}
                   hitSlop={8}
                 >
@@ -720,7 +720,7 @@ export default function ArticleDetailScreen() {
                     onPress={() => {
                       void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                       router.push({
-                        pathname: '/article-detail',
+                        pathname: '/article-detail' as any,
                         params: { id: rel.id },
                       });
                     }}

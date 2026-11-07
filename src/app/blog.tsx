@@ -95,7 +95,7 @@ export default function BlogScreen() {
         onPress={() => {
           void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
           router.push({
-            pathname: '/article-detail',
+            pathname: '/article-detail' as any,
             params: { id: item.id },
           });
         }}

@@ -19,42 +19,62 @@ export class AuthRepositorySupabase implements AuthRepository {
   /**
    * Helper: Fetch extra profile fields from public.profiles
    */
-  private async getProfileData(userId: string): Promise<{
+  private async getProfileData(
+    userId: string,
+    metadata?: Record<string, any>,
+    fallbackEmail?: string
+  ): Promise<{
     fullName: string;
     phone: string;
     role: UserRole;
     avatarUrl: string | null;
     preferredTheme: 'light' | 'dark' | 'system';
   }> {
+    const fallbackName = metadata?.full_name || (fallbackEmail ? fallbackEmail.split('@')[0] : 'Chủ nuôi');
+    const fallbackPhone = metadata?.phone || '';
+    const fallbackRole: UserRole = (fallbackEmail && fallbackEmail.includes('admin')) ? 'admin' : 'owner';
+
     try {
       const { data, error } = await supabase
         .from('profiles')
         .select('full_name, phone, role, avatar_url, preferred_theme')
         .eq('id', userId)
-        .single();
+        .maybeSingle();
 
       if (error || !data) {
+        try {
+          await supabase.from('profiles').upsert({
+            id: userId,
+            full_name: fallbackName,
+            phone: fallbackPhone,
+            role: fallbackRole,
+            preferred_theme: 'system',
+          });
+        } catch {
+          // ignore upsert errors
+        }
+
         return {
-          fullName: 'Chủ nuôi',
-          phone: '',
-          role: 'owner',
+          fullName: fallbackName,
+          phone: fallbackPhone,
+          role: fallbackRole,
           avatarUrl: null,
           preferredTheme: 'system',
         };
       }
 
       return {
-        fullName: data.full_name || 'Chủ nuôi',
-        phone: data.phone || '',
-        role: (data.role as UserRole) || 'owner',
+        fullName: data.full_name || fallbackName,
+        phone: data.phone || fallbackPhone,
+        role: (data.role as UserRole) || fallbackRole,
         avatarUrl: data.avatar_url,
         preferredTheme: (data.preferred_theme as any) || 'system',
       };
     } catch {
       return {
-        fullName: 'Chủ nuôi',
-        phone: '',
-        role: 'owner',
+        fullName: fallbackName,
+        phone: fallbackPhone,
+        role: fallbackRole,
         avatarUrl: null,
         preferredTheme: 'system',
       };
@@ -73,7 +93,7 @@ export class AuthRepositorySupabase implements AuthRepository {
         throw new Error(mapSupabaseError(error));
       }
 
-      const profile = await this.getProfileData(data.user.id);
+      const profile = await this.getProfileData(data.user.id, data.user.user_metadata, cleanEmail);
 
       const user: User = {
         id: data.user.id,
@@ -117,7 +137,7 @@ export class AuthRepositorySupabase implements AuthRepository {
         errorMsg.includes('fetch');
 
       if (isNetworkError) {
-        // Offline Fallback 1: check if credentials match locally cached account
+        // Offline Fallback: check if credentials match locally cached account from previous successful login
         try {
           const cached = await ExpoSecureStoreAdapter.getItem(`petcare_offline_cred_${cleanEmail}`);
           if (cached) {
@@ -135,36 +155,10 @@ export class AuthRepositorySupabase implements AuthRepository {
           }
         }
 
-        // Offline Fallback 2: allow direct offline login with the entered email!
-        const role: UserRole = cleanEmail.includes('admin') ? 'admin' : 'owner';
-        const offlineUser: User = {
-          id: `offline_${cleanEmail.replace(/[^a-zA-Z0-9_-]/g, '_')}`,
-          email: cleanEmail,
-          fullName: cleanEmail.split('@')[0],
-          phone: '',
-          role,
-          avatarUrl: null,
-          preferredTheme: 'system',
-          petPreferences: [],
-          createdAt: new Date().toISOString(),
-        };
-
-        const offlineSession: AuthSession = {
-          user: offlineUser,
-          accessToken: 'offline_token_' + Date.now(),
-          refreshToken: 'offline_refresh_' + Date.now(),
-          expiresAt: Date.now() + 365 * 24 * 60 * 60 * 1000,
-        };
-
-        try {
-          await ExpoSecureStoreAdapter.setItem(
-            `petcare_offline_cred_${cleanEmail}`,
-            JSON.stringify({ email: cleanEmail, password, user: offlineUser, session: offlineSession })
-          );
-          await ExpoSecureStoreAdapter.setItem('petcare_last_user_session', JSON.stringify(offlineSession));
-        } catch {}
-
-        return { user: offlineUser, session: offlineSession };
+        // Do NOT silently create a ghost account! Inform user clearly of the connection issue
+        throw new Error(
+          'Không thể kết nối đến máy chủ Supabase. Vui lòng kiểm tra Internet/Wi-Fi của điện thoại và đảm bảo bạn đã khởi động lại Expo bằng lệnh: npx expo start -c'
+        );
       }
 
       throw new Error(errorMsg);
@@ -491,7 +485,11 @@ export class AuthRepositorySupabase implements AuthRepository {
     try {
       const { data, error } = await supabase.auth.getSession();
       if (!error && data?.session && data.session.user) {
-        const profile = await this.getProfileData(data.session.user.id);
+        const profile = await this.getProfileData(
+          data.session.user.id,
+          data.session.user.user_metadata,
+          data.session.user.email
+        );
 
         const user: User = {
           id: data.session.user.id,
@@ -528,7 +526,13 @@ export class AuthRepositorySupabase implements AuthRepository {
     try {
       const cached = await ExpoSecureStoreAdapter.getItem('petcare_last_user_session');
       if (cached) {
-        return JSON.parse(cached) as AuthSession;
+        const parsed = JSON.parse(cached) as AuthSession;
+        // Clean up any stale dummy offline session so the user is not trapped in a ghost account
+        if (parsed?.user?.id?.startsWith('offline_')) {
+          await ExpoSecureStoreAdapter.removeItem('petcare_last_user_session').catch(() => {});
+          return null;
+        }
+        return parsed;
       }
     } catch {
       // ignore

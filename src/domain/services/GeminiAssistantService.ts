@@ -32,7 +32,7 @@ NGUYÊN TẮC HOẠT ĐỘNG:
 3. Cá nhân hóa: Khi có thông tin thú cưng (tên, loài chó/mèo, giống loài, cân nặng), hãy xưng hô thân mật (ví dụ: "với bé [Tên bé] giống [Giống] nặng [Số kg]...") và đưa ra lời khuyên được may đo chính xác cho kích thước và cơ địa của bé.
 4. Cảnh báo khẩn cấp: Nếu người dùng mô tả các triệu chứng nguy hiểm (khó thở, co giật, nôn ra máu, tiêu chảy cấp mất nước, ngộ độc sô-cô-la/hành tỏi, hôn mê), hãy CẢNH BÁO ĐỎ và khuyên đưa bé tới trạm thú y gần nhất NGAY LẬP TỨC.
 5. Khuyến cáo y tế: Nhắc nhở người dùng rằng tư vấn của AI mang tính tham khảo chuyên môn và không thay thế hoàn toàn việc thăm khám trực tiếp tại phòng khám thú y.
-6. Định dạng: Trình bày súc tích với gạch đầu dòng, emoji sinh động, dễ đọc trên màn hình điện thoại.
+6. Định dạng: Trình bày rõ ràng, dễ đọc trên màn hình điện thoại. Dùng danh sách đánh số hoặc gạch đầu dòng (- ) để liệt kê. Dùng **chữ đậm** chỉ cho các từ khóa cực kỳ quan trọng (tên triệu chứng, thuốc, thời gian). KHÔNG dùng # heading trừ khi câu trả lời rất dài. KHÔNG lạm dụng **in đậm** cho mọi câu — chỉ dùng khi thực sự cần nhấn mạnh. Viết câu văn tự nhiên, không máy móc.
 `;
 
 const BUILTIN_KEY_B64 = 'QVEuQWI4Uk42SmNGTE52eVZ1WE1Zb2hFMkNhV3dkM3pIUUdWajVXWmxpanI4Sk80X1ZYZGc=';
@@ -75,11 +75,11 @@ export class GeminiAssistantService {
       let petContextStr = '';
       if (request.petContext) {
         petContextStr = `\n[THÔNG TIN THÚ CƯNG HIỆN TẠI]:
-- Tên: ${request.petContext.name}
-- Loài: ${request.petContext.species === 'cat' ? 'Mèo' : 'Chó'}
-- Giống: ${request.petContext.breed || 'Chưa rõ'}
-- Cân nặng: ${request.petContext.weightKg ? `${request.petContext.weightKg} kg` : 'Chưa rõ'}
-- Triệt sản: ${request.petContext.isNeutered ? 'Đã triệt sản' : 'Chưa triệt sản'}\n`;
+        - Tên: ${request.petContext.name}
+        - Loài: ${request.petContext.species === 'cat' ? 'Mèo' : 'Chó'}
+        - Giống: ${request.petContext.breed || 'Chưa rõ'}
+        - Cân nặng: ${request.petContext.weightKg ? `${request.petContext.weightKg} kg` : 'Chưa rõ'}
+        - Triệt sản: ${request.petContext.isNeutered ? 'Đã triệt sản' : 'Chưa triệt sản'}\n`;
       }
 
       // Build conversation contents with strictly alternating turns (user -> model -> user)

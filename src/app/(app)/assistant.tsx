@@ -31,6 +31,7 @@ import { useAppTheme } from '@/presentation/theme';
 import { useChatStore } from '@/presentation/stores/useChatStore';
 import { usePetStore } from '@/presentation/stores/usePetStore';
 import type { ChatMessage } from '@/domain/entities/ChatMessage';
+import { MarkdownText } from '@/presentation/components/MarkdownText';
 
 export default function AssistantScreen() {
   const { colors, typography: typo, spacing, radius } = useAppTheme();
@@ -167,18 +168,25 @@ export default function AssistantScreen() {
                 { borderRadius: radius.lg },
               ]}
             >
-              <Text
-                style={[
-                  typo.bodyMedium,
-                  {
-                    color: isUser ? colors.onPrimary : item.isError ? colors.error : colors.text,
-                    lineHeight: 22,
-                  },
-                ]}
-                selectable
-              >
-                {item.text}
-              </Text>
+              {isUser ? (
+                <Text
+                  style={[
+                    typo.bodyMedium,
+                    {
+                      color: colors.onPrimary,
+                      lineHeight: 22,
+                    },
+                  ]}
+                  selectable
+                >
+                  {item.text}
+                </Text>
+              ) : (
+                <MarkdownText
+                  content={item.text}
+                  textColor={item.isError ? colors.error : colors.text}
+                />
+              )}
             </View>
 
             {/* Suggested Action Chips */}

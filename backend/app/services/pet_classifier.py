@@ -1,4 +1,4 @@
-﻿import json
+import json
 from functools import lru_cache
 from pathlib import Path
 
@@ -15,182 +15,122 @@ from torchvision.models import efficientnet_b0
 BASE_DIR = Path(__file__).resolve().parents[2]
 PROJECT_DIR = BASE_DIR.parent
 MODEL_DIR = PROJECT_DIR / "models"
+MAPPINGS_DIR = MODEL_DIR / "label_mappings"
+STAGE1_DIR = MODEL_DIR / "stage 1"
+STAGE2_DIR = MODEL_DIR / "stage 2"
 
-MODEL_PATH = (
-    MODEL_DIR / "37_class" / "efficientnet_b0_37class_best.pth"
-)
-
-MAPPING_PATH = (
-    MODEL_DIR / "label_mappings"
-    / "efficientnet_b0_37class_mapping.json"
-)
+STAGE1_MODEL_PATH = STAGE1_DIR / "efficientnet_b0_species_best.pth"
+STAGE1_MAPPING_PATH = MAPPINGS_DIR / "species_mapping.json"
 
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 TOP_K = 3
 IMAGE_SIZE = 224
+CROP_SIZE = 224
+RESIZE_SIZE = 256
 
-# ImageNet normalization - same standard used by pretrained EfficientNet-B0
+# Standard ImageNet normalization matching training
 IMAGENET_MEAN = [0.485, 0.456, 0.406]
 IMAGENET_STD = [0.229, 0.224, 0.225]
 
+SUPPORTED_SPECIES = [
+    "bird",
+    "cat",
+    "dog",
+    "hamster",
+    "rabbit",
+]
+
 
 # ============================================================
-# 2. VIETNAMESE LABELS
+# 2. VIETNAMESE LABELS DICTIONARY
 # ============================================================
 
 SPECIES_VI = {
     "dog": "Chó",
     "cat": "Mèo",
+    "bird": "Chim",
+    "rabbit": "Thỏ",
+    "hamster": "Chuột Hamster",
 }
 
 BREED_VI = {
+    # --- CAT BREEDS (12) ---
     "Abyssinian": "Mèo Abyssinian",
+    "Bengal": "Mèo Bengal",
+    "Birman": "Mèo Birman",
+    "Bombay": "Mèo Bombay",
+    "British_Shorthair": "Mèo Anh lông ngắn",
+    "Egyptian_Mau": "Mèo Ai Cập Mau",
+    "Maine_Coon": "Mèo Maine Coon",
+    "Persian": "Mèo Ba Tư",
+    "Ragdoll": "Mèo Ragdoll",
+    "Russian_Blue": "Mèo Nga xanh",
+    "Siamese": "Mèo Xiêm",
+    "Sphynx": "Mèo không lông Sphynx",
+
+    # --- DOG BREEDS (25) ---
     "american_bulldog": "Bulldog Mỹ",
     "american_pit_bull_terrier": "Pit Bull Terrier Mỹ",
     "basset_hound": "Basset Hound",
     "beagle": "Beagle",
-    "Bengal": "Mèo Bengal",
-    "Birman": "Mèo Birman",
-    "Bombay": "Mèo Bombay",
     "boxer": "Boxer",
-    "British_Shorthair": "Mèo Anh lông ngắn",
     "chihuahua": "Chihuahua",
-    "Egyptian_Mau": "Mèo Ai Cập Mau",
     "english_cocker_spaniel": "Cocker Spaniel Anh",
     "english_setter": "English Setter",
-    "german_shorthaired": "Chó lông ngắn Đức",
+    "german_shorthaired": "Chó săn lông ngắn Đức",
     "great_pyrenees": "Great Pyrenees",
     "havanese": "Havanese",
     "japanese_chin": "Japanese Chin",
     "keeshond": "Keeshond",
     "leonberger": "Leonberger",
-    "Maine_Coon": "Mèo Maine Coon",
-    "miniature_pinscher": "Miniature Pinscher",
+    "miniature_pinscher": "Miniature Pinscher (Phốc hươu)",
     "newfoundland": "Newfoundland",
-    "Persian": "Mèo Ba Tư",
-    "pomeranian": "Phốc sóc",
+    "pomeranian": "Phốc sóc (Pomeranian)",
     "pug": "Pug",
-    "Ragdoll": "Mèo Ragdoll",
-    "Russian_Blue": "Mèo Nga xanh",
     "saint_bernard": "Saint Bernard",
     "samoyed": "Samoyed",
     "scottish_terrier": "Scottish Terrier",
     "shiba_inu": "Shiba Inu",
-    "Siamese": "Mèo Siamese",
-    "Sphynx": "Mèo Sphynx",
     "staffordshire_bull_terrier": "Staffordshire Bull Terrier",
     "wheaten_terrier": "Wheaten Terrier",
     "yorkshire_terrier": "Yorkshire Terrier",
+
+    # --- BIRD BREEDS (10) ---
+    "ALEXANDRINE PARAKEET": "Vẹt Alexandrine",
+    "CANARY": "Chim Yến hót (Canary)",
+    "COCKATOO": "Vẹt Mào (Cockatoo)",
+    "EASTERN ROSELLA": "Vẹt Rosella phương Đông",
+    "GOLDEN PARAKEET": "Vẹt Vàng (Golden Parakeet)",
+    "GOULDIAN FINCH": "Chim Bảy màu (Gouldian Finch)",
+    "HYACINTH MACAW": "Vẹt Macaw Xanh Lam (Hyacinth Macaw)",
+    "JAVA SPARROW": "Chim Manh Nhật (Sẻ Java)",
+    "RAINBOW LORIKEET": "Vẹt Cầu Vồng (Rainbow Lorikeet)",
+    "ROSY FACED LOVEBIRD": "Vẹt Mẫu Đơn mặt hồng (Lovebird)",
+
+    # --- HAMSTER BREEDS (2) ---
+    "Syrian": "Chuột Hamster Bear (Syrian)",
+    "Winter": "Chuột Hamster Winter White",
+
+    # --- RABBIT BREEDS (4) ---
+    "californian": "Thỏ California",
+    "holland-lop": "Thỏ tai cụp Holland Lop",
+    "lionhead": "Thỏ sư tử (Lionhead)",
+    "new-zealand": "Thỏ New Zealand trắng",
 }
 
 
 # ============================================================
-# 3. LOAD MAPPING
+# 3. PREPROCESSING PIPELINE
 # ============================================================
 
-def load_mapping():
-    if not MAPPING_PATH.is_file():
-        raise FileNotFoundError(
-            f"Không tìm thấy mapping: {MAPPING_PATH}"
-        )
-
-    with open(MAPPING_PATH, "r", encoding="utf-8") as f:
-        mapping = json.load(f)
-
-    classes = mapping.get("classes")
-
-    if not isinstance(classes, dict) or len(classes) != 37:
-        raise ValueError("Mapping phải chứa đúng 37 class.")
-
-    labels = [None] * 37
-    species_by_label = {}
-
-    for item in classes.values():
-        label = item["breed_name"]
-        index = int(item["model_label"])
-        species = item["species"].strip().lower()
-
-        if index < 0 or index >= 37:
-            raise ValueError(f"Class index không hợp lệ: {index}")
-
-        if species not in ("dog", "cat"):
-            raise ValueError(
-                f"Loài không hợp lệ của {label}: {species}"
-            )
-
-        if labels[index] is not None:
-            raise ValueError(f"Trùng class index: {index}")
-
-        labels[index] = label
-        species_by_label[label] = species
-
-    if any(label is None for label in labels):
-        raise ValueError("Mapping thiếu class index.")
-
-    return labels, species_by_label
-
-
-# ============================================================
-# 4. LOAD MODEL
-# ============================================================
-
-@lru_cache(maxsize=1)
-def get_predictor():
-    if not MODEL_PATH.is_file():
-        raise FileNotFoundError(
-            f"Không tìm thấy model: {MODEL_PATH}"
-        )
-
-    try:
-        checkpoint = torch.load(
-            MODEL_PATH,
-            map_location="cpu",
-            weights_only=True,
-        )
-    except TypeError:
-        checkpoint = torch.load(
-            MODEL_PATH,
-            map_location="cpu",
-        )
-
-    if not isinstance(checkpoint, dict):
-        raise TypeError("Checkpoint không hợp lệ.")
-
-    if "model_state_dict" not in checkpoint:
-        raise KeyError("Checkpoint thiếu model_state_dict.")
-
-    labels, species_by_label = load_mapping()
-
-    # Đối chiếu mapping với checkpoint để tránh sai thứ tự nhãn
-    checkpoint_mapping = checkpoint.get("class_to_idx")
-
-    if checkpoint_mapping is None:
-        raise KeyError("Checkpoint thiếu class_to_idx.")
-
-    json_mapping = {
-        label: index for index, label in enumerate(labels)
-    }
-
-    if json_mapping != checkpoint_mapping:
-        raise ValueError(
-            "Mapping JSON không khớp class_to_idx trong checkpoint."
-        )
-
-    if int(checkpoint.get("img_size", 0)) != IMAGE_SIZE:
-        raise ValueError("Kích thước ảnh không khớp checkpoint.")
-
-    model = efficientnet_b0(weights=None)
-    model.classifier[1] = torch.nn.Linear(
-        model.classifier[1].in_features,
-        37,
-    )
-
-    model.load_state_dict(checkpoint["model_state_dict"])
-    model.to(DEVICE)
-    model.eval()
-
-    preprocess = transforms.Compose([
-        transforms.Resize((IMAGE_SIZE, IMAGE_SIZE)),
+def get_image_transform():
+    """
+    Chuẩn hóa ảnh theo kích thước 224x224 và thống kê ImageNet
+    khớp hoàn toàn với eval_transform trong training pipeline.
+    """
+    return transforms.Compose([
+        transforms.Resize(RESIZE_SIZE),
+        transforms.CenterCrop(CROP_SIZE),
         transforms.ToTensor(),
         transforms.Normalize(
             mean=IMAGENET_MEAN,
@@ -198,108 +138,224 @@ def get_predictor():
         ),
     ])
 
-    print(
-        f"[PetClassifier] Loaded EfficientNet-B0 37 classes | "
-        f"Device={DEVICE} | Input={IMAGE_SIZE}x{IMAGE_SIZE}"
+
+# ============================================================
+# 4. LOAD STAGE 1 (SPECIES CLASSIFIER - 5 LOÀI)
+# ============================================================
+
+@lru_cache(maxsize=1)
+def get_species_predictor():
+    if not STAGE1_MODEL_PATH.is_file():
+        raise FileNotFoundError(
+            f"Không tìm thấy model Stage 1: {STAGE1_MODEL_PATH}"
+        )
+    if not STAGE1_MAPPING_PATH.is_file():
+        raise FileNotFoundError(
+            f"Không tìm thấy mapping Stage 1: {STAGE1_MAPPING_PATH}"
+        )
+
+    with open(STAGE1_MAPPING_PATH, "r", encoding="utf-8") as f:
+        mapping = json.load(f)
+
+    species_to_idx = mapping.get("species_to_idx", {})
+    idx_to_species = mapping.get("idx_to_species", {})
+    num_classes = len(species_to_idx)
+
+    # Sort labels by index
+    labels = [None] * num_classes
+    for idx_str, sp in idx_to_species.items():
+        labels[int(idx_str)] = sp
+
+    checkpoint = torch.load(
+        STAGE1_MODEL_PATH,
+        map_location="cpu",
+        weights_only=False,
     )
 
-    return model, labels, species_by_label, preprocess
+    state_dict = checkpoint.get("model_state_dict", checkpoint)
+
+    model = efficientnet_b0(weights=None)
+    in_features = model.classifier[1].in_features
+    model.classifier = torch.nn.Sequential(
+        torch.nn.Dropout(p=0.3),
+        torch.nn.Linear(in_features, num_classes),
+    )
+    model.load_state_dict(state_dict)
+    model.to(DEVICE)
+    model.eval()
+
+    print(
+        f"[PetClassifier] Loaded Stage 1 Species Model (5 classes) | "
+        f"Device={DEVICE}"
+    )
+    return model, labels
 
 
 # ============================================================
-# 5. PREDICTION
+# 5. LOAD STAGE 2 (BREED CLASSIFIER THEO TỪNG LOÀI)
 # ============================================================
 
-def predict_pet(image: Image.Image) -> dict:
+@lru_cache(maxsize=8)
+def get_breed_predictor(species: str):
     """
-    Nhận ảnh PIL và dự đoán một trong 37 giống chó/mèo.
+    Nạp mô hình phân loại giống chuyên biệt cho loài (bird, cat, dog, hamster, rabbit).
+    Được cache trong bộ nhớ để tái sử dụng tối đa.
     """
+    species = species.lower().strip()
+    if species not in SUPPORTED_SPECIES:
+        raise ValueError(f"Loài không được hỗ trợ phân loại giống: {species}")
 
-    model, labels, species_by_label, preprocess = get_predictor()
+    mapping_path = MAPPINGS_DIR / f"{species}_mapping.json"
+    model_path = STAGE2_DIR / species / f"efficientnet_b0_{species}_best.pth"
 
-    image = ImageOps.exif_transpose(image).convert("RGB")
-    image_tensor = preprocess(image).unsqueeze(0).to(DEVICE)
+    if not model_path.is_file():
+        raise FileNotFoundError(f"Không tìm thấy model Stage 2: {model_path}")
+    if not mapping_path.is_file():
+        raise FileNotFoundError(f"Không tìm thấy mapping Stage 2: {mapping_path}")
+
+    with open(mapping_path, "r", encoding="utf-8") as f:
+        mapping = json.load(f)
+
+    idx_to_breed = mapping.get("idx_to_breed", {})
+    num_classes = mapping.get("num_classes", len(idx_to_breed))
+
+    labels = [None] * num_classes
+    for idx_str, br in idx_to_breed.items():
+        labels[int(idx_str)] = br
+
+    checkpoint = torch.load(
+        model_path,
+        map_location="cpu",
+        weights_only=False,
+    )
+
+    state_dict = checkpoint.get("model_state_dict", checkpoint)
+
+    model = efficientnet_b0(weights=None)
+    in_features = model.classifier[1].in_features
+    model.classifier = torch.nn.Sequential(
+        torch.nn.Dropout(p=0.3),
+        torch.nn.Linear(in_features, num_classes),
+    )
+    model.load_state_dict(state_dict)
+    model.to(DEVICE)
+    model.eval()
+
+    print(
+        f"[PetClassifier] Loaded Stage 2 Breed Model for '{species}' "
+        f"({num_classes} classes) | Device={DEVICE}"
+    )
+    return model, labels
+
+
+# ============================================================
+# 6. HIERARCHICAL PREDICTION PIPELINE (STAGE 1 -> STAGE 2)
+# ============================================================
+
+def predict_pet(
+    image: Image.Image,
+    species_override: str | None = None,
+) -> dict:
+    """
+    Quy trình nhận diện 2 giai đoạn phân cấp:
+      1. Stage 1: Nhận diện loài (Chó, Mèo, Chim, Thỏ, Hamster)
+      2. Stage 2: Nhận diện giống chuyên biệt của loài đó
+    """
+    transform = get_image_transform()
+    image_rgb = ImageOps.exif_transpose(image).convert("RGB")
+    image_tensor = transform(image_rgb).unsqueeze(0).to(DEVICE)
+
+    # --------------------------------------------------------
+    # BƯỚC 1: DỰ ĐOÁN LOÀI (STAGE 1)
+    # --------------------------------------------------------
+    if species_override and species_override.lower() in SUPPORTED_SPECIES:
+        predicted_species = species_override.lower()
+        species_confidence = 1.0
+        species_results = [{
+            "label": predicted_species,
+            "label_vi": SPECIES_VI.get(predicted_species, predicted_species),
+            "confidence": 1.0,
+            "confidence_percent": 100.0,
+        }]
+    else:
+        s1_model, species_labels = get_species_predictor()
+
+        with torch.inference_mode():
+            s1_logits = s1_model(image_tensor)
+            s1_probs = torch.softmax(s1_logits, dim=1)[0]
+
+        s1_probs_list = s1_probs.cpu().tolist()
+
+        # Sắp xếp danh sách toàn bộ loài theo độ tin cậy
+        ranked_species = sorted(
+            enumerate(s1_probs_list),
+            key=lambda x: x[1],
+            reverse=True,
+        )
+
+        species_results = []
+        for idx, prob in ranked_species:
+            sp_name = species_labels[idx]
+            species_results.append({
+                "label": sp_name,
+                "label_vi": SPECIES_VI.get(sp_name, sp_name),
+                "confidence": round(float(prob), 6),
+                "confidence_percent": round(float(prob) * 100, 2),
+            })
+
+        predicted_species = species_results[0]["label"]
+        species_confidence = species_results[0]["confidence"]
+
+    species_top3 = species_results[:min(TOP_K, len(species_results))]
+
+    # --------------------------------------------------------
+    # BƯỚC 2: DỰ ĐOÁN GIỐNG THEO LOÀI (STAGE 2)
+    # --------------------------------------------------------
+    s2_model, breed_labels = get_breed_predictor(predicted_species)
 
     with torch.inference_mode():
-        logits = model(image_tensor)
-        probabilities = torch.softmax(logits, dim=1)[0]
+        s2_logits = s2_model(image_tensor)
+        s2_probs = torch.softmax(s2_logits, dim=1)[0]
 
-    # Top 3 giống trên toàn bộ 37 class
-    top_values, top_indices = torch.topk(
-        probabilities,
-        k=min(TOP_K, len(labels)),
-    )
+    num_breeds = len(breed_labels)
+    k = min(TOP_K, num_breeds)
+    top_values, top_indices = torch.topk(s2_probs, k=k)
 
     breed_results = []
-
-    for probability, index in zip(
+    for prob, idx in zip(
         top_values.cpu().tolist(),
         top_indices.cpu().tolist(),
     ):
-        label = labels[index]
-
+        label = breed_labels[idx]
         breed_results.append({
             "label": label,
             "label_vi": BREED_VI.get(label, label),
-            "confidence": round(float(probability), 6),
-            "confidence_percent": round(
-                float(probability) * 100, 2
-            ),
+            "confidence": round(float(prob), 6),
+            "confidence_percent": round(float(prob) * 100, 2),
         })
 
     best_breed = breed_results[0]
-    predicted_species = species_by_label[best_breed["label"]]
-
-    # Tính xác suất tổng hợp của từng loài từ 37 class
-    species_probabilities = {
-        "dog": 0.0,
-        "cat": 0.0,
-    }
-
-    for index, probability in enumerate(
-        probabilities.cpu().tolist()
-    ):
-        label = labels[index]
-        species = species_by_label[label]
-        species_probabilities[species] += float(probability)
-
-    species_results = []
-
-    for species, probability in sorted(
-        species_probabilities.items(),
-        key=lambda item: item[1],
-        reverse=True,
-    ):
-        species_results.append({
-            "label": species,
-            "label_vi": SPECIES_VI[species],
-            "confidence": round(probability, 6),
-            "confidence_percent": round(probability * 100, 2),
-        })
-
-    species_confidence = species_probabilities[predicted_species]
 
     return {
         "species": predicted_species,
-        "species_vi": SPECIES_VI[predicted_species],
+        "species_vi": SPECIES_VI.get(predicted_species, predicted_species),
         "species_confidence": round(species_confidence, 6),
-        "species_confidence_percent": round(
-            species_confidence * 100, 2
-        ),
-        "species_top3": species_results,
+        "species_confidence_percent": round(species_confidence * 100, 2),
+        "species_top3": species_top3,
 
         "breed": best_breed["label"],
         "breed_vi": best_breed["label_vi"],
         "breed_confidence": best_breed["confidence"],
-        "breed_confidence_percent": best_breed[
-            "confidence_percent"
-        ],
+        "breed_confidence_percent": best_breed["confidence_percent"],
         "breed_top3": breed_results,
 
-        "message": "Đã nhận diện giống chó/mèo bằng EfficientNet-B0 37 class.",
+        "pipeline": "2-stage-hierarchical",
+        "stage1_model": "EfficientNet-B0 (5 species)",
+        "stage2_model": f"EfficientNet-B0 ({predicted_species.capitalize()} - {num_breeds} breeds)",
         "device": str(DEVICE),
-        "note": (
-            "Đây là kết quả dự đoán của AI, không phải xác nhận "
-            "chắc chắn về loài hoặc giống thú cưng."
+        "message": (
+            f"Đã nhận diện loài {SPECIES_VI.get(predicted_species, predicted_species)} "
+            f"và giống {best_breed['label_vi']} bằng mô hình AI 2 giai đoạn."
         ),
+        "note": "Đây là kết quả dự đoán của AI, không phải xác nhận chắc chắn về loài hoặc giống thú cưng.",
     }

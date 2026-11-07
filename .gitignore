@@ -49,8 +49,20 @@ example
 *.keystore
 
 # Python / FastAPI Backend
+.venv/
+backend/.venv/
 backend/venv/
 backend/**/__pycache__/
 *.py[cod]
 *$py.class
 .pytest_cache/
+
+# Local datasets & backups
+dataset/
+models_backup_37class/
+
+# Root test images & local docx
+/*.jpg
+/*.jpeg
+/*.png
+/*.docx
