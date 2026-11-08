@@ -55,11 +55,20 @@ export function AddPetModal({ visible, onClose, onSuccess }: AddPetModalProps) {
     setValidationError(null);
     void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
 
+    const defaultBreedNames: Record<string, string> = {
+      dog: 'Chó nhà',
+      cat: 'Mèo nhà',
+      bird: 'Chim cảnh',
+      hamster: 'Hamster',
+      rabbit: 'Thỏ cảnh',
+      other: 'Khác',
+    };
+
     try {
       await addPet({
         name: name.trim(),
         species,
-        breedName: breedName.trim() || (species === 'dog' ? 'Chó nhà' : 'Mèo nhà'),
+        breedName: breedName.trim() || defaultBreedNames[species] || 'Thú cưng',
         weightKg: weightNum,
         sex,
         isNeutered,
@@ -142,58 +151,86 @@ export function AddPetModal({ visible, onClose, onSuccess }: AddPetModalProps) {
             <Text style={[typo.labelMedium, { color: colors.text, marginBottom: spacing.xs }]}>
               Loài thú cưng
             </Text>
+            {/* Row 1: Chó + Mèo */}
             <View style={styles.speciesRow}>
-              <Pressable
-                onPress={() => setSpecies('dog')}
-                style={[
-                  styles.speciesBtn,
-                  {
-                    backgroundColor: species === 'dog' ? colors.primaryContainer : colors.surfaceElevated,
-                    borderColor: species === 'dog' ? colors.primary : colors.border,
-                    borderRadius: radius.lg,
-                  },
-                ]}
-              >
-                <MaterialCommunityIcons
-                  name="dog"
-                  size={24}
-                  color={species === 'dog' ? colors.primary : colors.textSecondary}
-                />
-                <Text
+              {(
+                [
+                  { value: 'dog', icon: 'dog', label: 'Chó' },
+                  { value: 'cat', icon: 'cat', label: 'Mèo' },
+                ] as { value: string; icon: string; label: string }[]
+              ).map((item) => (
+                <Pressable
+                  key={item.value}
+                  onPress={() => setSpecies(item.value as Species)}
                   style={[
-                    typo.labelMedium,
-                    { color: species === 'dog' ? colors.primary : colors.text, marginLeft: 8, fontWeight: species === 'dog' ? '700' : '500' },
+                    styles.speciesBtn,
+                    {
+                      backgroundColor: species === item.value ? colors.primaryContainer : colors.surfaceElevated,
+                      borderColor: species === item.value ? colors.primary : colors.border,
+                      borderRadius: radius.lg,
+                    },
                   ]}
                 >
-                  Chó (Dog)
-                </Text>
-              </Pressable>
-
-              <Pressable
-                onPress={() => setSpecies('cat')}
-                style={[
-                  styles.speciesBtn,
-                  {
-                    backgroundColor: species === 'cat' ? colors.primaryContainer : colors.surfaceElevated,
-                    borderColor: species === 'cat' ? colors.primary : colors.border,
-                    borderRadius: radius.lg,
-                  },
-                ]}
-              >
-                <MaterialCommunityIcons
-                  name="cat"
-                  size={24}
-                  color={species === 'cat' ? colors.primary : colors.textSecondary}
-                />
-                <Text
+                  <MaterialCommunityIcons
+                    name={item.icon as any}
+                    size={22}
+                    color={species === item.value ? colors.primary : colors.textSecondary}
+                  />
+                  <Text
+                    style={[
+                      typo.labelMedium,
+                      {
+                        color: species === item.value ? colors.primary : colors.text,
+                        marginLeft: 6,
+                        fontWeight: species === item.value ? '700' : '500',
+                      },
+                    ]}
+                  >
+                    {item.label}
+                  </Text>
+                </Pressable>
+              ))}
+            </View>
+            {/* Row 2: Chim + Hamster + Thỏ */}
+            <View style={[styles.speciesRow, { marginTop: 8 }]}>
+              {(
+                [
+                  { value: 'bird', icon: 'bird', label: 'Chim' },
+                  { value: 'hamster', icon: 'rodent', label: 'Hamster' },
+                  { value: 'rabbit', icon: 'rabbit', label: 'Thỏ' },
+                ] as { value: string; icon: string; label: string }[]
+              ).map((item) => (
+                <Pressable
+                  key={item.value}
+                  onPress={() => setSpecies(item.value as Species)}
                   style={[
-                    typo.labelMedium,
-                    { color: species === 'cat' ? colors.primary : colors.text, marginLeft: 8, fontWeight: species === 'cat' ? '700' : '500' },
+                    styles.speciesBtn,
+                    {
+                      backgroundColor: species === item.value ? colors.primaryContainer : colors.surfaceElevated,
+                      borderColor: species === item.value ? colors.primary : colors.border,
+                      borderRadius: radius.lg,
+                    },
                   ]}
                 >
-                  Mèo (Cat)
-                </Text>
-              </Pressable>
+                  <MaterialCommunityIcons
+                    name={item.icon as any}
+                    size={22}
+                    color={species === item.value ? colors.primary : colors.textSecondary}
+                  />
+                  <Text
+                    style={[
+                      typo.labelMedium,
+                      {
+                        color: species === item.value ? colors.primary : colors.text,
+                        marginLeft: 6,
+                        fontWeight: species === item.value ? '700' : '500',
+                      },
+                    ]}
+                  >
+                    {item.label}
+                  </Text>
+                </Pressable>
+              ))}
             </View>
 
             {/* Name Input */}

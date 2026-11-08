@@ -23,7 +23,7 @@ export type PetLifeStage =
 export type NutritionActivityLevel = 'low' | 'moderate' | 'high' | 'working';
 
 export interface NutritionCalculationInput {
-  species: 'dog' | 'cat';
+  species: 'dog' | 'cat' | 'bird' | 'hamster' | 'rabbit';
   weightKg: number;
   lifeStage: PetLifeStage;
   isNeutered: boolean;
@@ -94,17 +94,40 @@ export const NUTRITION_FACTORS = {
     weightLoss: 0.8,
     activeHigh: 1.6,
   },
+  bird: {
+    young: 2.0,
+    adult: 1.5,
+    senior: 1.2,
+    activeHigh: 1.8,
+  },
+  hamster: {
+    young: 1.8,
+    adult: 1.4,
+    senior: 1.1,
+    activeHigh: 1.6,
+  },
+  rabbit: {
+    young: 2.0,
+    adultNeutered: 1.3,
+    adultIntact: 1.5,
+    senior: 1.1,
+    inactiveObeseProne: 1.0,
+    weightLoss: 0.9,
+    activeHigh: 1.6,
+  },
 } as const;
 
 /**
  * Calculate Resting Energy Requirement (RER)
- * RER = 70 * (weightKg ^ 0.75)
+ * - Mammals (Chó, Mèo, Thỏ, Hamster): Kleiber law RER = 70 * (weightKg ^ 0.75)
+ * - Birds (Passerine & Psittacine): Avian standard BMR = 78 * (weightKg ^ 0.75) (or 10-15% higher than eutherian mammals)
  */
-export function calculateRER(weightKg: number): number {
+export function calculateRER(weightKg: number, species: 'dog' | 'cat' | 'bird' | 'hamster' | 'rabbit' = 'dog'): number {
   if (weightKg <= 0) {
     throw new Error('Cân nặng phải lớn hơn 0 kg');
   }
-  const rer = 70 * Math.pow(weightKg, 0.75);
+  const factor = species === 'bird' ? 78 : 70;
+  const rer = factor * Math.pow(weightKg, 0.75);
   return Math.round(rer * 10) / 10;
 }
 
@@ -128,17 +151,41 @@ export function determineActivityFactor(input: NutritionCalculationInput): numbe
     return NUTRITION_FACTORS.dog.adultIntact;
   }
 
-  // Cat
-  if (isWeightLoss) return NUTRITION_FACTORS.cat.weightLoss;
-  if (isObeseProne || activityLevel === 'low') return NUTRITION_FACTORS.cat.inactiveObeseProne;
-  if (lifeStage === 'puppy_kitten_young') return NUTRITION_FACTORS.cat.kittenYoung;
-  if (lifeStage === 'puppy_kitten_older') return NUTRITION_FACTORS.cat.kittenOlder;
-  if (lifeStage === 'senior') return NUTRITION_FACTORS.cat.senior;
+  if (species === 'cat') {
+    if (isWeightLoss) return NUTRITION_FACTORS.cat.weightLoss;
+    if (isObeseProne || activityLevel === 'low') return NUTRITION_FACTORS.cat.inactiveObeseProne;
+    if (lifeStage === 'puppy_kitten_young') return NUTRITION_FACTORS.cat.kittenYoung;
+    if (lifeStage === 'puppy_kitten_older') return NUTRITION_FACTORS.cat.kittenOlder;
+    if (lifeStage === 'senior') return NUTRITION_FACTORS.cat.senior;
 
-  // Adult cat
-  if (activityLevel === 'high') return NUTRITION_FACTORS.cat.activeHigh;
-  if (isNeutered) return NUTRITION_FACTORS.cat.adultNeutered;
-  return NUTRITION_FACTORS.cat.adultIntact;
+    // Adult cat
+    if (activityLevel === 'high') return NUTRITION_FACTORS.cat.activeHigh;
+    if (isNeutered) return NUTRITION_FACTORS.cat.adultNeutered;
+    return NUTRITION_FACTORS.cat.adultIntact;
+  }
+
+  if (species === 'bird') {
+    if (lifeStage === 'puppy_kitten_young' || lifeStage === 'puppy_kitten_older') return NUTRITION_FACTORS.bird.young;
+    if (lifeStage === 'senior') return NUTRITION_FACTORS.bird.senior;
+    if (activityLevel === 'high' || activityLevel === 'working') return NUTRITION_FACTORS.bird.activeHigh;
+    return NUTRITION_FACTORS.bird.adult;
+  }
+
+  if (species === 'hamster') {
+    if (lifeStage === 'puppy_kitten_young' || lifeStage === 'puppy_kitten_older') return NUTRITION_FACTORS.hamster.young;
+    if (lifeStage === 'senior') return NUTRITION_FACTORS.hamster.senior;
+    if (activityLevel === 'high' || activityLevel === 'working') return NUTRITION_FACTORS.hamster.activeHigh;
+    return NUTRITION_FACTORS.hamster.adult;
+  }
+
+  // Rabbit
+  if (isWeightLoss) return NUTRITION_FACTORS.rabbit.weightLoss;
+  if (isObeseProne || activityLevel === 'low') return NUTRITION_FACTORS.rabbit.inactiveObeseProne;
+  if (lifeStage === 'puppy_kitten_young' || lifeStage === 'puppy_kitten_older') return NUTRITION_FACTORS.rabbit.young;
+  if (lifeStage === 'senior') return NUTRITION_FACTORS.rabbit.senior;
+  if (activityLevel === 'high' || activityLevel === 'working') return NUTRITION_FACTORS.rabbit.activeHigh;
+  if (isNeutered) return NUTRITION_FACTORS.rabbit.adultNeutered;
+  return NUTRITION_FACTORS.rabbit.adultIntact;
 }
 
 /**
@@ -159,10 +206,10 @@ export function calculateWetFoodGrams(kcal: number): number {
  * Pure function: Calculate full breed-aware nutritional recommendation
  */
 export function calculateNutrition(input: NutritionCalculationInput): NutritionCalculationResult {
-  const rer = calculateRER(input.weightKg);
+  const rer = calculateRER(input.weightKg, input.species);
   const baseFactor = determineActivityFactor(input);
 
-  // Look up specialized breed profile from 37-breed dataset
+  // Look up specialized breed profile from 53-breed dataset
   const breedProfile = findBreedNutritionProfile(input.breedKey || input.breedName);
   const breedModifier = breedProfile ? breedProfile.metabolicModifier : 1.0;
 
@@ -172,7 +219,11 @@ export function calculateNutrition(input: NutritionCalculationInput): NutritionC
 
   // Recommended meals per day
   let mealsPerDay = 2;
-  if (input.lifeStage === 'puppy_kitten_young') {
+  if (input.species === 'bird' || input.species === 'hamster') {
+    mealsPerDay = 2;
+  } else if (input.species === 'rabbit') {
+    mealsPerDay = 2; // Cỏ khô không giới hạn + 2 lần bữa rau/viên
+  } else if (input.lifeStage === 'puppy_kitten_young') {
     mealsPerDay = 4;
   } else if (input.lifeStage === 'puppy_kitten_older') {
     mealsPerDay = 3;
@@ -188,8 +239,16 @@ export function calculateNutrition(input: NutritionCalculationInput): NutritionC
   const dryFoodGrams = calculateDryFoodGrams(mer);
   const wetFoodGrams = calculateWetFoodGrams(mer);
 
-  // Optimal diet ratio (default to breed recommended wet ratio or 0.5)
-  const wetRatio = breedProfile ? breedProfile.recommendedWetRatio : input.species === 'cat' ? 0.6 : 0.3;
+  // Optimal diet ratio (default to breed recommended wet ratio or species default)
+  const defaultWetRatio =
+    input.species === 'cat'
+      ? 0.6
+      : input.species === 'bird'
+      ? 0.2
+      : input.species === 'rabbit' || input.species === 'hamster'
+      ? 0.1
+      : 0.3;
+  const wetRatio = breedProfile ? breedProfile.recommendedWetRatio : defaultWetRatio;
   const optimalDryCal = mer * (1 - wetRatio);
   const optimalWetCal = mer * wetRatio;
 
@@ -203,18 +262,32 @@ export function calculateNutrition(input: NutritionCalculationInput): NutritionC
   const defaultMacro =
     input.species === 'cat'
       ? { proteinPercent: 40, fatPercent: 30, carbsPercent: 30 }
+      : input.species === 'bird'
+      ? { proteinPercent: 15, fatPercent: 8, carbsPercent: 77 }
+      : input.species === 'hamster'
+      ? { proteinPercent: 18, fatPercent: 6, carbsPercent: 76 }
+      : input.species === 'rabbit'
+      ? { proteinPercent: 14, fatPercent: 3, carbsPercent: 83 }
       : { proteinPercent: 26, fatPercent: 15, carbsPercent: 59 };
   const macroRatio = breedProfile ? breedProfile.macroRatio : defaultMacro;
 
   // Explanatory summaries
-  const breedTitle = breedProfile ? `giống ${breedProfile.nameVi}` : input.species === 'dog' ? 'chó' : 'mèo';
+  const speciesViLabels: Record<string, string> = {
+    dog: 'chó',
+    cat: 'mèo',
+    bird: 'chim',
+    hamster: 'hamster',
+    rabbit: 'thỏ',
+  };
+  const breedTitle = breedProfile ? `giống ${breedProfile.nameVi}` : speciesViLabels[input.species] || 'thú cưng';
   const summaryVi = `Khẩu phần khuyến nghị cho ${breedTitle} (${input.weightKg} kg): ${mer} kcal/ngày, chia làm ${mealsPerDay} bữa.`;
 
   const modifierNote =
     breedProfile && breedModifier !== 1.0
       ? ` × hệ số giống ${breedProfile.nameEn} (${breedModifier}x)`
       : '';
-  const formulaExplanationVi = `RER = 70 × (${input.weightKg})^0.75 = ${rer} kcal. Hệ số duy trì MER = ${baseFactor}x${modifierNote} = ${effectiveFactor}x. Tổng năng lượng cần nạp = ${mer} kcal/ngày.`;
+  const rerFormula = input.species === 'bird' ? '78' : '70';
+  const formulaExplanationVi = `RER = ${rerFormula} × (${input.weightKg})^0.75 = ${rer} kcal. Hệ số duy trì MER = ${baseFactor}x${modifierNote} = ${effectiveFactor}x. Tổng năng lượng cần nạp = ${mer} kcal/ngày.`;
 
   return {
     weightKg: input.weightKg,

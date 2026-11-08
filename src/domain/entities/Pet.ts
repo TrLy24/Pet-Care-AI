@@ -1,7 +1,7 @@
 /**
  * PawCare AI — Pet Domain Entity
  */
-export type Species = 'dog' | 'cat' | 'other';
+export type Species = 'dog' | 'cat' | 'bird' | 'hamster' | 'rabbit' | 'other';
 
 export interface Pet {
   id: string;

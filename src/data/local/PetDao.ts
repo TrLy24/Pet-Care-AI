@@ -7,6 +7,7 @@
  * 3. Primary key is generated via expo-crypto so it's identical on server.
  */
 import type { SQLiteDatabase } from 'expo-sqlite';
+import type { Species } from '@/domain/entities/Pet';
 import { OutboxDao } from './OutboxDao';
 import { generateUUID } from './uuid';
 
@@ -14,7 +15,7 @@ export interface LocalPet {
   id: string;
   owner_id: string;
   name: string;
-  species: 'dog' | 'cat' | 'other';
+  species: Species;
   breed_id: string | null;
   breed_name_custom: string | null;
   sex: string | null;
@@ -34,7 +35,7 @@ export interface LocalPet {
 
 export interface CreatePetParams {
   name: string;
-  species: 'dog' | 'cat' | 'other';
+  species: Species;
   breed_id?: string | null;
   breed_name_custom?: string | null;
   sex?: 'male' | 'female' | 'unknown';

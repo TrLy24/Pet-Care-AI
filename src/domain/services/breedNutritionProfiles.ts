@@ -16,7 +16,7 @@ export interface BreedNutritionProfile {
   id: string;
   nameVi: string;
   nameEn: string;
-  species: 'dog' | 'cat';
+  species: 'dog' | 'cat' | 'bird' | 'hamster' | 'rabbit';
   sizeCategory: 'toy' | 'small' | 'medium' | 'large' | 'giant';
   typicalWeightKg: {
     min: number;
@@ -759,6 +759,303 @@ export const BREED_NUTRITION_PROFILES: Record<string, BreedNutritionProfile> = {
       'Lưng dài và 4 chân ngắn là cấu trúc giải phẫu cực kỳ nhạy cảm. Thừa chỉ 0.5kg cũng có thể gây thoát vị đĩa đệm bại liệt 2 chân sau! Giảm 12% calo MER, dùng rau củ bổ sung thay đồ ăn vặt béo ngậy.',
     scientificSource: 'Pembroke Welsh Corgi Club of America Health & Journal of Veterinary Internal Medicine',
   },
+
+  // ==========================================
+  // BIRD SPECIES / BREEDS (10 Classes)
+  // ==========================================
+  alexandrine_parakeet: {
+    id: 'alexandrine_parakeet',
+    nameVi: 'Vẹt Alexandrine',
+    nameEn: 'Alexandrine Parakeet',
+    species: 'bird',
+    sizeCategory: 'medium',
+    typicalWeightKg: { min: 0.2, max: 0.3 },
+    metabolicModifier: 1.0,
+    macroRatio: { proteinPercent: 14, fatPercent: 8, carbsPercent: 78 },
+    recommendedWetRatio: 0.25,
+    kibbleSize: 'medium',
+    keyNutrients: ['Vitamin A (Beta-carotene)', 'Canxi & Phốt pho (2:1)', 'Khoáng vi lượng', 'Chất xơ thô'],
+    healthRisks: ['Thiếu hụt Vitamin A', 'Bệnh cắn mổ lông do stress', 'Béo phì do ăn quá nhiều hạt hướng dương'],
+    dietaryAdviceVi:
+      'Khẩu phần chuẩn gồm 60-70% thức ăn dạng viên nén (pellet) dinh dưỡng chuyên dụng cho vẹt lớn, 20-30% rau củ tươi (ớt chuông, cà rốt, bông cải), và 10% hạt ngũ cốc nguyên cám. Cung cấp nang mực (cuttlebone) để bổ sung canxi và mài mỏ.',
+    scientificSource: 'Association of Avian Veterinarians (AAV) Psittacine Clinical Nutrition Guidelines',
+  },
+
+  canary: {
+    id: 'canary',
+    nameVi: 'Chim Yến hót (Canary)',
+    nameEn: 'Canary',
+    species: 'bird',
+    sizeCategory: 'toy',
+    typicalWeightKg: { min: 0.015, max: 0.025 },
+    metabolicModifier: 1.15,
+    macroRatio: { proteinPercent: 16, fatPercent: 10, carbsPercent: 74 },
+    recommendedWetRatio: 0.15,
+    kibbleSize: 'extra_small',
+    keyNutrients: ['Canxi sinh học', 'Protein thực vật dễ tiêu', 'Sắc tố Carotenoid', 'Vitamin E'],
+    healthRisks: ['Tắc nghẽn ống dẫn trứng khi đẻ', 'Gãy rụng lông trong kỳ thay lông', 'Nấm diều candida'],
+    dietaryAdviceVi:
+      'Thức ăn chính là hỗn hợp hạt yến hót chuyên dụng (hạt kê, hạt yến mạch, hạt cải) kết hợp viên nén micro-pellet. Trong mùa thay lông hoặc sinh sản, bổ sung thức ăn trứng mềm (egg food) và rau xà lách sạch, lá bồ công anh.',
+    scientificSource: 'The Avian Welfare Coalition & Veterinary Clinics of North America: Exotic Animal Practice',
+  },
+
+  cockatoo: {
+    id: 'cockatoo',
+    nameVi: 'Vẹt Mào (Cockatoo)',
+    nameEn: 'Cockatoo',
+    species: 'bird',
+    sizeCategory: 'large',
+    typicalWeightKg: { min: 0.35, max: 0.8 },
+    metabolicModifier: 0.95,
+    macroRatio: { proteinPercent: 15, fatPercent: 7, carbsPercent: 78 },
+    recommendedWetRatio: 0.3,
+    kibbleSize: 'large',
+    keyNutrients: ['Chất xơ thực vật', 'Canxi hữu cơ', 'Vitamin D3 quang hóa', 'Axit amin thiết yếu'],
+    healthRisks: ['Bệnh gan nhiễm mỡ do thức ăn béo', 'Hội chứng tự cắn xé da lông', 'Thiếu canxi máu'],
+    dietaryAdviceVi:
+      'Vẹt mào có tỷ lệ trao đổi chất dễ tích tụ mỡ nếu ăn hạt béo (hạt hướng dương, hạt dẻ). Bắt buộc dùng viên pellet hữu cơ chiếm 75% calo, kèm rau lá xanh đậm, bí đỏ hấp và khoai lang. Tuyệt đối không cho ăn bơ, chocolate hoặc thức ăn chiên rán.',
+    scientificSource: 'World Parrot Trust & Harrison’s Bird Foods Avian Nutrition Reference',
+  },
+
+  eastern_rosella: {
+    id: 'eastern_rosella',
+    nameVi: 'Vẹt Rosella phương Đông',
+    nameEn: 'Eastern Rosella',
+    species: 'bird',
+    sizeCategory: 'small',
+    typicalWeightKg: { min: 0.09, max: 0.12 },
+    metabolicModifier: 1.05,
+    macroRatio: { proteinPercent: 14, fatPercent: 8, carbsPercent: 78 },
+    recommendedWetRatio: 0.2,
+    kibbleSize: 'small',
+    keyNutrients: ['Carotenoid màu lông rực rỡ', 'Vitamin A', 'Kẽm hữu cơ', 'Choline'],
+    healthRisks: ['Ký sinh trùng đường ruột', 'Suy giảm sắc tố lông', 'Viêm dạ dày tuyến (PDD)'],
+    dietaryAdviceVi:
+      'Loài vẹt Úc ưa thích hạt cỏ nhỏ, mầm ngũ cốc, và quả mọng tự nhiên. Cung cấp 60% pellet hạt nhỏ, bổ sung hạt nảy mầm (sprouted seeds) tươi giàu enzyme hoạt tính cùng ớt cay, táo tươi và dưa leo không hạt.',
+    scientificSource: 'Australian Avicultural Federation & AAV Avian Medicine Protocols',
+  },
+
+  golden_parakeet: {
+    id: 'golden_parakeet',
+    nameVi: 'Vẹt Vàng (Golden Parakeet)',
+    nameEn: 'Golden Parakeet (Guaruba)',
+    species: 'bird',
+    sizeCategory: 'medium',
+    typicalWeightKg: { min: 0.24, max: 0.28 },
+    metabolicModifier: 1.0,
+    macroRatio: { proteinPercent: 15, fatPercent: 9, carbsPercent: 76 },
+    recommendedWetRatio: 0.25,
+    kibbleSize: 'medium',
+    keyNutrients: ['Lutein & Zeaxanthin', 'Vitamin tổng hợp A-D-E', 'Canxi cacbonat', 'Men vi sinh aviary'],
+    healthRisks: ['Bệnh vẹt Psittacosis', 'Thiếu hụt ánh sáng tổng hợp vitamin D', 'Tự vặt lông ngực'],
+    dietaryAdviceVi:
+      'Được mệnh danh là báu vật nhiệt đới Nam Mỹ, vẹt vàng cần khẩu phần giàu trái cây nhiệt đới tươi (xoài, đu đủ, thanh long) xen kẽ pellet công thức vẹt rừng mưa. Nước uống phải thay 2 lần mỗi ngày và tiệt trùng khay ăn.',
+    scientificSource: 'IUCN Species Survival Commission & Zoo and Aquarium Avian TAG Nutrition Manual',
+  },
+
+  gouldian_finch: {
+    id: 'gouldian_finch',
+    nameVi: 'Chim Bảy màu (Gouldian Finch)',
+    nameEn: 'Gouldian Finch',
+    species: 'bird',
+    sizeCategory: 'toy',
+    typicalWeightKg: { min: 0.012, max: 0.017 },
+    metabolicModifier: 1.2,
+    macroRatio: { proteinPercent: 16, fatPercent: 9, carbsPercent: 75 },
+    recommendedWetRatio: 0.1,
+    kibbleSize: 'extra_small',
+    keyNutrients: ['L-Lysine & DL-Methionine', 'I-ốt (Iodine)', 'Khoáng mỏ canxi', 'Vitamin B phức hợp'],
+    healthRisks: ['Thiếu hụt i-ốt gây sưng tuyến giáp', 'Ve ký sinh khí quản (Air-sac mites)', 'Khó lột xác rụng lông'],
+    dietaryAdviceVi:
+      'Chim bảy màu là dòng finch nhạy cảm với thiếu hụt i-ốt. Cần bổ sung khoáng i-ốt dạng khối đá liếm hoặc giọt nước. Thức ăn hạt kê đỏ, kê vàng chất lượng cao, cỏ tươi non sạch và bột dinh dưỡng protein trong giai đoạn nuôi con.',
+    scientificSource: 'Save The Gouldian Fund & Avian Medicine and Surgery in Practice',
+  },
+
+  hyacinth_macaw: {
+    id: 'hyacinth_macaw',
+    nameVi: 'Vẹt Macaw Xanh Lam (Hyacinth Macaw)',
+    nameEn: 'Hyacinth Macaw',
+    species: 'bird',
+    sizeCategory: 'giant',
+    typicalWeightKg: { min: 1.2, max: 1.7 },
+    metabolicModifier: 1.1,
+    macroRatio: { proteinPercent: 15, fatPercent: 22, carbsPercent: 63 },
+    recommendedWetRatio: 0.35,
+    kibbleSize: 'large',
+    keyNutrients: ['Chất béo thực vật lành mạnh', 'Axit béo Omega-6/Omega-3', 'Vitamin A', 'Canxi hữu cơ'],
+    healthRisks: ['Bệnh giãn dạ dày tuyến (PDD)', 'Khô nứt mỏ và da chân', 'Nghẽn tiêu hóa do vỏ hạt cứng'],
+    dietaryAdviceVi:
+      'Khác biệt hoàn toàn với các loài vẹt khác, Hyacinth Macaw trong tự nhiên ăn chủ yếu hạt cọ dầu Acrocomia. Chúng cần tỷ lệ chất béo cao hơn rất nhiều (18-25% calo). Khẩu phần phải có quả cọ, hạt mắc-ca, hạt óc chó và hạnh nhân nứt vỏ kèm pellet macaw chuyên dụng.',
+    scientificSource: 'Journal of Avian Medicine and Surgery & Hyacinth Macaw Project Field Studies',
+  },
+
+  java_sparrow: {
+    id: 'java_sparrow',
+    nameVi: 'Chim Manh Nhật (Sẻ Java)',
+    nameEn: 'Java Sparrow',
+    species: 'bird',
+    sizeCategory: 'toy',
+    typicalWeightKg: { min: 0.022, max: 0.028 },
+    metabolicModifier: 1.1,
+    macroRatio: { proteinPercent: 14, fatPercent: 7, carbsPercent: 79 },
+    recommendedWetRatio: 0.1,
+    kibbleSize: 'extra_small',
+    keyNutrients: ['Canxi vỏ sò mài mịn', 'Silica trợ tiêu hóa diều chim', 'Vitamin E & Kẽm'],
+    healthRisks: ['Thừa mỡ nội tạng do chỉ ăn lúa mì', 'Thiếu canxi giòn xương', 'Viêm kết mạc mắt'],
+    dietaryAdviceVi:
+      'Thức ăn truyền thống là hạt thóc nhỏ, hạt kê ba màu và hạt canary seed. Bổ sung hạt cát khoáng tiêu hóa (grit) vỏ sò vụn sạch để chim nghiền nát thức ăn trong mề. Rau chân vịt, lá mồng tơi thái sợi nhỏ là nguồn vitamin tự nhiên tuyệt vời.',
+    scientificSource: 'Avicultural Society UK Handbook & Exotic Companion Medicine Handbook',
+  },
+
+  rainbow_lorikeet: {
+    id: 'rainbow_lorikeet',
+    nameVi: 'Vẹt Cầu Vồng (Rainbow Lorikeet)',
+    nameEn: 'Rainbow Lorikeet',
+    species: 'bird',
+    sizeCategory: 'small',
+    typicalWeightKg: { min: 0.11, max: 0.15 },
+    metabolicModifier: 1.25,
+    macroRatio: { proteinPercent: 12, fatPercent: 5, carbsPercent: 83 },
+    recommendedWetRatio: 0.7,
+    kibbleSize: 'small',
+    keyNutrients: ['Đường đơn tự nhiên (Fructose/Glucose)', 'Mật hoa lỏng công thức', 'Sắt cực thấp (Low Iron)', 'Vitamin C'],
+    healthRisks: ['Bệnh ứ đọng sắt ở gan (Hemochromatosis)', 'Nhiễm trùng vi khuẩn mật hoa ôi thiu', 'Tổn thương nhú lưỡi'],
+    dietaryAdviceVi:
+      'Đặc biệt chú ý: Lưỡi có dạng bàn chải để hút mật! TUYỆT ĐỐI KHÔNG cho ăn hạt cứng khô như vẹt thường vì sẽ hỏng dạ dày và lưỡi. Phải dùng bột mật hoa nectar dạng ướt/khô chuyên dụng cho Lorikeet kết hợp trái cây mềm ngọt (nho ngọt, lê, đu đủ). Hàm lượng sắt trong thức ăn phải dưới 60 ppm.',
+    scientificSource: 'AAV Special Lorikeet Dietary Standard & Taronga Conservation Society Australia',
+  },
+
+  rosy_faced_lovebird: {
+    id: 'rosy_faced_lovebird',
+    nameVi: 'Vẹt Mẫu Đơn mặt hồng (Lovebird)',
+    nameEn: 'Rosy-faced Lovebird',
+    species: 'bird',
+    sizeCategory: 'toy',
+    typicalWeightKg: { min: 0.045, max: 0.06 },
+    metabolicModifier: 1.1,
+    macroRatio: { proteinPercent: 15, fatPercent: 8, carbsPercent: 77 },
+    recommendedWetRatio: 0.2,
+    kibbleSize: 'small',
+    keyNutrients: ['Canxi sinh sản', 'Vitamin A', 'Chất chống oxy hóa thảo dược', 'Protein tạo lông'],
+    healthRisks: ['Đẻ trứng liên tục gây kiệt sức', 'Bệnh mỏ và lông Psittacine (PBFD)', 'Béo phì'],
+    dietaryAdviceVi:
+      'Khẩu phần tiêu chuẩn: 65% viên pellet cỡ nhỏ (mini-pellet), 20% rau củ tươi luộc sơ (ngô ngọt, đậu hà lan, bí ngô), 15% hạt hỗn hợp sạch. Giảm bớt hạt hướng dương béo để chim không bị u mỡ dưới da.',
+    scientificSource: 'African Lovebird Society International & Clinical Avian Medicine (Harrison & Lightfoot)',
+  },
+
+  // ==========================================
+  // HAMSTER SPECIES / BREEDS (2 Classes)
+  // ==========================================
+  syrian: {
+    id: 'syrian',
+    nameVi: 'Chuột Hamster Bear (Syrian)',
+    nameEn: 'Syrian Hamster (Golden)',
+    species: 'hamster',
+    sizeCategory: 'toy',
+    typicalWeightKg: { min: 0.12, max: 0.2 },
+    metabolicModifier: 1.0,
+    macroRatio: { proteinPercent: 18, fatPercent: 6, carbsPercent: 76 },
+    recommendedWetRatio: 0.1,
+    kibbleSize: 'small',
+    keyNutrients: ['Đạm động vật bổ sung (sâu bột)', 'Chất xơ tiêu hóa thô', 'Vitamin E & K', 'Kẽm vi lượng'],
+    healthRisks: ['Bệnh ướt đuôi (Wet Tail do vi khuẩn)', 'Nhiễm trùng túi má do thức ăn dính', 'Béo phì & Đái tháo đường'],
+    dietaryAdviceVi:
+      'Mỗi ngày cung cấp 10-12g hạt hỗn hợp ép đùn (lab block / pellet) để tránh hamster chọn ăn hạt béo bỏ hạt bổ dưỡng. Thức ăn tươi như bông cải xanh, dưa chuột chỉ cho lượng bằng hạt đậu. Bổ sung 2-3 con sâu bột sấy khô mỗi tuần để cung cấp protein săn mồi.',
+    scientificSource: 'NRC Nutrient Requirements of Laboratory Animals & British Hamster Association Standards',
+  },
+
+  winter: {
+    id: 'winter',
+    nameVi: 'Chuột Hamster Winter White',
+    nameEn: 'Winter White Dwarf Hamster',
+    species: 'hamster',
+    sizeCategory: 'toy',
+    typicalWeightKg: { min: 0.03, max: 0.05 },
+    metabolicModifier: 1.15,
+    macroRatio: { proteinPercent: 19, fatPercent: 5, carbsPercent: 76 },
+    recommendedWetRatio: 0.05,
+    kibbleSize: 'extra_small',
+    keyNutrients: ['Hàm lượng đường cực thấp (Sugar-free)', 'Chất xơ cao', 'Omega-3 từ hạt lanh', 'Protein tinh sạch'],
+    healthRisks: ['Bệnh tiểu đường Type 2 cực kỳ phổ biến', 'U nang tuyến bã nhờn', 'Mòn răng bất thường'],
+    dietaryAdviceVi:
+      'Giống hamster lùn cực kỳ nhạy cảm với đường và tinh bột nhanh. Tuyệt đối KHÔNG cho ăn hoa quả ngọt (táo, chuối, ngô ngọt) hay đồ ăn vặt mật ong. Khẩu phần ăn chuyên dụng cho Dwarf Hamster với nhiều hạt cỏ tự nhiên, hạt kê, hạt hạt lanh và cỏ khô Alfalfa/Timothy.',
+    scientificSource: 'Journal of Animal Physiology and Animal Nutrition & The Hamster Society UK',
+  },
+
+  // ==========================================
+  // RABBIT BREEDS (4 Classes)
+  // ==========================================
+  californian: {
+    id: 'californian',
+    nameVi: 'Thỏ California',
+    nameEn: 'Californian Rabbit',
+    species: 'rabbit',
+    sizeCategory: 'large',
+    typicalWeightKg: { min: 3.5, max: 4.8 },
+    metabolicModifier: 0.95,
+    macroRatio: { proteinPercent: 14, fatPercent: 3, carbsPercent: 83 },
+    recommendedWetRatio: 0.15,
+    kibbleSize: 'large',
+    keyNutrients: ['Chất xơ thô không hòa tan (>22%)', 'Canxi kiểm soát chặt chẽ (<0.8%)', 'Vitamin D', 'Vitamin A'],
+    healthRisks: ['Ngừng trệ dạ dày ruột (GI Stasis)', 'Sỏi bàng quang do dư thừa canxi (Sludge bladder)', 'Viêm da bàn chân (Sore hocks)'],
+    dietaryAdviceVi:
+      'Khẩu phần cốt lõi: 85% Cỏ khô Timothy/Orchard Grass không giới hạn suốt ngày đêm để mài răng cửa và nhu động ruột liên tục. Viên nén cỏ thỏ (Timothy-based pellets) giới hạn 25g/kg thể trọng mỗi ngày. Cung cấp 1-2 bát rau xanh xơ cao (xà lách romaine, thì là, rau mùi).',
+    scientificSource: 'House Rabbit Society (HRS) Nutrition Guidelines & ARBA Breed Health Guide',
+  },
+
+  'holland-lop': {
+    id: 'holland-lop',
+    nameVi: 'Thỏ tai cụp Holland Lop',
+    nameEn: 'Holland Lop Rabbit',
+    species: 'rabbit',
+    sizeCategory: 'small',
+    typicalWeightKg: { min: 1.3, max: 1.9 },
+    metabolicModifier: 1.05,
+    macroRatio: { proteinPercent: 13, fatPercent: 3, carbsPercent: 84 },
+    recommendedWetRatio: 0.15,
+    kibbleSize: 'small',
+    keyNutrients: ['Chất xơ dài mài mòn răng', 'Prebiotics đường cỏ', 'Canxi tối ưu cho hộp sọ tròn'],
+    healthRisks: ['Lệch khớp cắn răng hàm (Malocclusion đầu ngắn)', 'Viêm tai giữa do cấu trúc tai cụp', 'Búi lông ruột dạ dày'],
+    dietaryAdviceVi:
+      'Với hộp sọ brachycephalic đầu ngắn, răng hàm rất dễ lệch và mọc đâm vào lưỡi nếu không được nhai cỏ thô liên tục. Bắt buộc phải có cỏ Timothy tươi xanh chất lượng cao 24/7. Hạn chế tối đa tinh bột và hoa quả ngọt.',
+    scientificSource: 'American Rabbit Breeders Association (ARBA) & Veterinary Clinics: Exotic Pet Care',
+  },
+
+  lionhead: {
+    id: 'lionhead',
+    nameVi: 'Thỏ sư tử (Lionhead)',
+    nameEn: 'Lionhead Rabbit',
+    species: 'rabbit',
+    sizeCategory: 'small',
+    typicalWeightKg: { min: 1.2, max: 1.7 },
+    metabolicModifier: 1.05,
+    macroRatio: { proteinPercent: 14, fatPercent: 3, carbsPercent: 83 },
+    recommendedWetRatio: 0.15,
+    kibbleSize: 'small',
+    keyNutrients: ['Chất xơ chống tắc búi lông (Hairball Prevention)', 'Biotin cho bờm cổ', 'Men tiêu hóa thảo mộc'],
+    healthRisks: ['Tắc nghẽn đường ruột do nuốt lông xù (Trichobezoar)', 'Khí trướng đầy bụng cấp', 'Viêm kết mạc'],
+    dietaryAdviceVi:
+      'Bộ lông bờm xù sư tử đặc trưng khiến thỏ tự chải chuốt và nuốt phải lượng lông khổng lồ vào dạ dày (thỏ không thể nôn ra như mèo). Nguồn chất xơ dài từ cỏ Timothy dồi dào là vị cứu tinh duy nhất giúp đẩy búi lông ra ngoài theo phân viên.',
+    scientificSource: 'British Rabbit Council Breed Standards & Rabbit Welfare Association and Fund (RWAF)',
+  },
+
+  'new-zealand': {
+    id: 'new-zealand',
+    nameVi: 'Thỏ New Zealand trắng',
+    nameEn: 'New Zealand White Rabbit',
+    species: 'rabbit',
+    sizeCategory: 'large',
+    typicalWeightKg: { min: 4.0, max: 5.5 },
+    metabolicModifier: 0.95,
+    macroRatio: { proteinPercent: 15, fatPercent: 3, carbsPercent: 82 },
+    recommendedWetRatio: 0.15,
+    kibbleSize: 'large',
+    keyNutrients: ['Chất xơ thô (>20%)', 'Protein từ cỏ linh lăng cho thỏ tơ / Timothy cho thỏ lớn', 'Khoáng vi lượng'],
+    healthRisks: ['Béo phì nhanh chóng nếu nuôi lồng hẹp', 'Loãng xương cột sống khi thiếu vận động', 'Viêm gan truyền nhiễm'],
+    dietaryAdviceVi:
+      'Là giống thỏ vóc dáng lớn, cơ thể chuyển hóa năng lượng hiệu quả. Cần kiểm soát lượng viên nén công nghiệp nghiêm ngặt (tối đa 1/4 chén mỗi ngày), tăng tối đa cỏ khô Timothy và cho thỏ không gian chạy nhảy ít nhất 3-4 giờ mỗi ngày để duy trì cơ bắp.',
+    scientificSource: 'American Rabbit Breeders Association (ARBA) Commercial & Companion Guidelines',
+  },
 };
 
 /**
@@ -769,19 +1066,26 @@ export function findBreedNutritionProfile(
 ): BreedNutritionProfile | null {
   if (!breedKeyOrName) return null;
 
-  const normalized = breedKeyOrName.trim().toLowerCase().replace(/[\s-]+/g, '_');
+  const raw = breedKeyOrName.trim().toLowerCase();
+  const normalized = raw.replace(/[\s-]+/g, '_');
 
-  // Exact ID match
+  // Exact ID or raw key match
   if (BREED_NUTRITION_PROFILES[normalized]) {
     return BREED_NUTRITION_PROFILES[normalized];
   }
+  if (BREED_NUTRITION_PROFILES[raw]) {
+    return BREED_NUTRITION_PROFILES[raw];
+  }
 
-  // Search by English or Vietnamese partial name
+  // Search by English or Vietnamese partial name or normalized ID
   const entries = Object.values(BREED_NUTRITION_PROFILES);
   for (const item of entries) {
+    const itemIdNorm = item.id.toLowerCase().replace(/[\s-]+/g, '_');
     if (
-      normalized.includes(item.id) ||
-      item.id.includes(normalized) ||
+      normalized === itemIdNorm ||
+      raw === item.id.toLowerCase() ||
+      normalized.includes(itemIdNorm) ||
+      itemIdNorm.includes(normalized) ||
       normalized.includes(item.nameEn.toLowerCase().replace(/[\s-]+/g, '_')) ||
       normalized.includes(item.nameVi.toLowerCase().replace(/[\s-]+/g, '_'))
     ) {

@@ -31,7 +31,7 @@ import { useAppTheme } from '@/presentation/theme';
 import { useChatStore } from '@/presentation/stores/useChatStore';
 import { usePetStore } from '@/presentation/stores/usePetStore';
 import type { ChatMessage } from '@/domain/entities/ChatMessage';
-import { MarkdownText } from '@/presentation/components/MarkdownText';
+import { GeminiAssistantService } from '@/domain/services/GeminiAssistantService';
 
 export default function AssistantScreen() {
   const { colors, typography: typo, spacing, radius } = useAppTheme();
@@ -182,10 +182,18 @@ export default function AssistantScreen() {
                   {item.text}
                 </Text>
               ) : (
-                <MarkdownText
-                  content={item.text}
-                  textColor={item.isError ? colors.error : colors.text}
-                />
+                <Text
+                  style={[
+                    typo.bodyMedium,
+                    {
+                      color: item.isError ? colors.error : colors.text,
+                      lineHeight: 23,
+                    },
+                  ]}
+                  selectable
+                >
+                  {GeminiAssistantService.cleanAsterisks(item.text)}
+                </Text>
               )}
             </View>
 
