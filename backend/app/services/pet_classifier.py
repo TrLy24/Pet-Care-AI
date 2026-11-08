@@ -13,8 +13,17 @@ from torchvision.models import efficientnet_b0
 # ============================================================
 
 BASE_DIR = Path(__file__).resolve().parents[2]
-PROJECT_DIR = BASE_DIR.parent
-MODEL_DIR = PROJECT_DIR / "models"
+
+# MODEL_DIR: Hỗ trợ linh hoạt cả khi chạy từ repo gốc (D:\DACN2) lẫn chạy bên trong backend/ trên cloud
+if (BASE_DIR.parent / "models").is_dir():
+    MODEL_DIR = BASE_DIR.parent / "models"
+elif (BASE_DIR / "models").is_dir():
+    MODEL_DIR = BASE_DIR / "models"
+elif Path("models").is_dir():
+    MODEL_DIR = Path("models").resolve()
+else:
+    MODEL_DIR = BASE_DIR.parent / "models"
+
 MAPPINGS_DIR = MODEL_DIR / "label_mappings"
 STAGE1_DIR = MODEL_DIR / "stage 1"
 STAGE2_DIR = MODEL_DIR / "stage 2"

@@ -1,0 +1,10 @@
+services:
+  - type: web
+    name: petcare-ai-backend
+    env: python
+    plan: free
+    region: singapore
+    buildCommand: "pip install --no-cache-dir -r backend/requirements.txt --extra-index-url https://download.pytorch.org/whl/cpu"
+    startCommand: "python -m uvicorn backend.app.main:app --host 0.0.0.0 --port $PORT"
+    healthCheckPath: /health
+    autoDeploy: true
