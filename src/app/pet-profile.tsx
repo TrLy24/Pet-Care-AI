@@ -12,7 +12,11 @@
  * - Edit Pet modal with instant Supabase database persistence
  * - Delete pet with safe confirmation dialog
  */
-import React, { useEffect, useMemo, useState } from 'react';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
+import * as Haptics from 'expo-haptics';
+import * as ImagePicker from 'expo-image-picker';
+import { router, useLocalSearchParams } from 'expo-router';
+import { useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -27,19 +31,15 @@ import {
   TextInput,
   View,
 } from 'react-native';
-import { router, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
-import * as Haptics from 'expo-haptics';
-import * as ImagePicker from 'expo-image-picker';
 
-import { useAppTheme } from '@/presentation/theme';
+import type { Pet, Species } from '@/domain/entities/Pet';
+import { calculateNutrition } from '@/domain/services/NutritionCalculator';
+import { AddPetModal } from '@/presentation/components/AddPetModal';
+import { PrimaryButton } from '@/presentation/components/PrimaryButton';
 import { usePetStore } from '@/presentation/stores/usePetStore';
 import { useVaccinationStore } from '@/presentation/stores/useVaccinationStore';
-import { PrimaryButton } from '@/presentation/components/PrimaryButton';
-import { AddPetModal } from '@/presentation/components/AddPetModal';
-import { calculateNutrition } from '@/domain/services/NutritionCalculator';
-import type { Pet, Species } from '@/domain/entities/Pet';
+import { useAppTheme } from '@/presentation/theme';
 
 function parseBirthDate(dateStr?: string | null): Date | null {
   if (!dateStr) return null;
@@ -1388,7 +1388,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     position: 'relative',
-    overflow: 'hidden',
   },
   heroAvatarImage: {
     width: '100%',
@@ -1449,7 +1448,7 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   metricBox: {
-    width: '48.5%',
+    width: '47.5%',
     padding: 12,
     borderWidth: 1,
   },

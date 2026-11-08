@@ -8,10 +8,10 @@
  * 1. 1 day before due date (at 09:00 AM)
  * 2. On the exact due date (at 08:00 AM)
  */
-import { Platform } from 'react-native';
+import type { VaccinationType } from '@/domain/entities/Vaccination';
 import * as Notifications from 'expo-notifications';
 import { AndroidImportance } from 'expo-notifications';
-import type { VaccinationType } from '@/domain/entities/Vaccination';
+import { Platform } from 'react-native';
 
 // Configure notification behavior when app is in foreground
 try {
@@ -56,7 +56,6 @@ export class NotificationService {
           importance: AndroidImportance.HIGH,
           vibrationPattern: [0, 250, 250, 250],
           lightColor: '#10B981',
-          sound: 'default',
         });
       }
 
