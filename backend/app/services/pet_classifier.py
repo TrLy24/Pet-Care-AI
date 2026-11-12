@@ -258,7 +258,7 @@ def get_breed_predictor(species: str):
 
 
 # ============================================================
-# 6. HIERARCHICAL PREDICTION PIPELINE (STAGE 1 -> STAGE 2)
+# 6. UNIFIED 37-CLASS PREDICTION PIPELINE
 # ============================================================
 
 def predict_pet(
@@ -266,105 +266,10 @@ def predict_pet(
     species_override: str | None = None,
 ) -> dict:
     """
-    Quy trình nhận diện 2 giai đoạn phân cấp:
-      1. Stage 1: Nhận diện loài (Chó, Mèo, Chim, Thỏ, Hamster)
-      2. Stage 2: Nhận diện giống chuyên biệt của loài đó
+    Quy trình nhận diện sử dụng mô hình gộp 37 giống (Oxford-IIIT Pet Model).
     """
-    transform = get_image_transform()
-    image_rgb = ImageOps.exif_transpose(image).convert("RGB")
-    image_tensor = transform(image_rgb).unsqueeze(0).to(DEVICE)
-
-    # --------------------------------------------------------
-    # BƯỚC 1: DỰ ĐOÁN LOÀI (STAGE 1)
-    # --------------------------------------------------------
-    if species_override and species_override.lower() in SUPPORTED_SPECIES:
-        predicted_species = species_override.lower()
-        species_confidence = 1.0
-        species_results = [{
-            "label": predicted_species,
-            "label_vi": SPECIES_VI.get(predicted_species, predicted_species),
-            "confidence": 1.0,
-            "confidence_percent": 100.0,
-        }]
-    else:
-        s1_model, species_labels = get_species_predictor()
-
-        with torch.inference_mode():
-            s1_logits = s1_model(image_tensor)
-            s1_probs = torch.softmax(s1_logits, dim=1)[0]
-
-        s1_probs_list = s1_probs.cpu().tolist()
-
-        # Sắp xếp danh sách toàn bộ loài theo độ tin cậy
-        ranked_species = sorted(
-            enumerate(s1_probs_list),
-            key=lambda x: x[1],
-            reverse=True,
-        )
-
-        species_results = []
-        for idx, prob in ranked_species:
-            sp_name = species_labels[idx]
-            species_results.append({
-                "label": sp_name,
-                "label_vi": SPECIES_VI.get(sp_name, sp_name),
-                "confidence": round(float(prob), 6),
-                "confidence_percent": round(float(prob) * 100, 2),
-            })
-
-        predicted_species = species_results[0]["label"]
-        species_confidence = species_results[0]["confidence"]
-
-    species_top3 = species_results[:min(TOP_K, len(species_results))]
-
-    # --------------------------------------------------------
-    # BƯỚC 2: DỰ ĐOÁN GIỐNG THEO LOÀI (STAGE 2)
-    # --------------------------------------------------------
-    s2_model, breed_labels = get_breed_predictor(predicted_species)
-
-    with torch.inference_mode():
-        s2_logits = s2_model(image_tensor)
-        s2_probs = torch.softmax(s2_logits, dim=1)[0]
-
-    num_breeds = len(breed_labels)
-    k = min(TOP_K, num_breeds)
-    top_values, top_indices = torch.topk(s2_probs, k=k)
-
-    breed_results = []
-    for prob, idx in zip(
-        top_values.cpu().tolist(),
-        top_indices.cpu().tolist(),
-    ):
-        label = breed_labels[idx]
-        breed_results.append({
-            "label": label,
-            "label_vi": BREED_VI.get(label, label),
-            "confidence": round(float(prob), 6),
-            "confidence_percent": round(float(prob) * 100, 2),
-        })
-
-    best_breed = breed_results[0]
-
-    return {
-        "species": predicted_species,
-        "species_vi": SPECIES_VI.get(predicted_species, predicted_species),
-        "species_confidence": round(species_confidence, 6),
-        "species_confidence_percent": round(species_confidence * 100, 2),
-        "species_top3": species_top3,
-
-        "breed": best_breed["label"],
-        "breed_vi": best_breed["label_vi"],
-        "breed_confidence": best_breed["confidence"],
-        "breed_confidence_percent": best_breed["confidence_percent"],
-        "breed_top3": breed_results,
-
-        "pipeline": "2-stage-hierarchical",
-        "stage1_model": "EfficientNet-B0 (5 species)",
-        "stage2_model": f"EfficientNet-B0 ({predicted_species.capitalize()} - {num_breeds} breeds)",
-        "device": str(DEVICE),
-        "message": (
-            f"Đã nhận diện loài {SPECIES_VI.get(predicted_species, predicted_species)} "
-            f"và giống {best_breed['label_vi']} bằng mô hình AI 2 giai đoạn."
-        ),
-        "note": "Đây là kết quả dự đoán của AI, không phải xác nhận chắc chắn về loài hoặc giống thú cưng.",
-    }
+    try:
+        from app.services.pet_37class_classifier import predict_pet_37class
+    except ImportError:
+        from backend.app.services.pet_37class_classifier import predict_pet_37class
+    return predict_pet_37class(image)

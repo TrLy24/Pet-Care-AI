@@ -9,7 +9,8 @@ from starlette.concurrency import run_in_threadpool
 
 from app.schemas.nutrition import NutritionRequest
 from app.services.nutrition_engine import evaluate_nutrition_profile
-from app.services.pet_classifier import predict_pet, SUPPORTED_SPECIES
+from app.services.pet_classifier import SUPPORTED_SPECIES
+from app.services.pet_37class_classifier import predict_pet_37class
 
 
 app = FastAPI(
@@ -32,6 +33,7 @@ app.add_middleware(
 
 class Base64PredictRequest(BaseModel):
     image_base64: str
+    model: str | None = "37class"
 
 
 class AIConsultRequest(BaseModel):
@@ -128,8 +130,8 @@ async def predict_pet_image_base64(payload: Base64PredictRequest):
             image_format = original.format
             image = original.copy()
 
-        # Chay mo hinh qua threadpool de tranh block asyncio event loop
-        result = await run_in_threadpool(predict_pet, image)
+        # Chay mo hinh 37 class qua threadpool
+        result = await run_in_threadpool(predict_pet_37class, image)
 
         return {
             "image_format": image_format,
@@ -160,6 +162,7 @@ async def predict_pet_image_base64(payload: Base64PredictRequest):
 @app.post("/pet/predict")
 async def predict_pet_image(
     file: UploadFile = File(..., description="Anh thu cung can nhan dien"),
+    model: str = "37class",
 ):
     max_file_size = 15 * 1024 * 1024  # 15 MB
     image_bytes = await file.read(max_file_size + 1)
@@ -184,8 +187,8 @@ async def predict_pet_image(
             image_format = original.format
             image = original.copy()
 
-        # Chay mo hinh qua threadpool de tranh block asyncio event loop
-        result = await run_in_threadpool(predict_pet, image)
+        # Chay mo hinh 37 class qua threadpool
+        result = await run_in_threadpool(predict_pet_37class, image)
 
         return {
             "filename": file.filename,

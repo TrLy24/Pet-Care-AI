@@ -23,7 +23,12 @@ import { RegisterUseCase } from '../domain/usecases/RegisterUseCase';
 import { RestoreSessionUseCase } from '../domain/usecases/RestoreSessionUseCase';
 
 /** Whether to use mock implementations (default: false when real Supabase is configured) */
-const USE_MOCK = process.env.EXPO_PUBLIC_USE_MOCK === 'true';
+const isRealSupabaseConfigured =
+  Boolean(process.env.EXPO_PUBLIC_SUPABASE_URL) &&
+  !process.env.EXPO_PUBLIC_SUPABASE_URL?.includes('your-project');
+
+const USE_MOCK =
+  process.env.EXPO_PUBLIC_USE_MOCK === 'true' && !isRealSupabaseConfigured;
 
 // --- Repository singletons ---
 

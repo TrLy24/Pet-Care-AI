@@ -66,3 +66,8 @@ models_backup_37class/
 /*.jpeg
 /*.png
 /*.docx
+
+# Temporary build directory & generated APKs
+.temp/
+*.apk
+models_ondevice/

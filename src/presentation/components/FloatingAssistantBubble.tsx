@@ -11,6 +11,7 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
+  Alert,
   Animated,
   Dimensions,
   FlatList,
@@ -62,6 +63,7 @@ export function FloatingAssistantBubble() {
     deleteConversation,
     clearCurrentConversation,
     setApiKey,
+    loadApiKey,
     setActivePetContext,
     activePetContext,
     isChatModalOpen,
@@ -78,6 +80,14 @@ export function FloatingAssistantBubble() {
   const [showConfigModal, setShowConfigModal] = useState(false);
   const [tempApiKey, setTempApiKey] = useState(apiKey);
   const [showQuickMenu, setShowQuickMenu] = useState(false);
+
+  useEffect(() => {
+    void loadApiKey();
+  }, [loadApiKey]);
+
+  useEffect(() => {
+    setTempApiKey(apiKey);
+  }, [apiKey, showConfigModal]);
 
   // Position for the floating bubble
   const defaultBottom = Platform.OS === 'ios' ? 95 : 80;
@@ -153,9 +163,24 @@ export function FloatingAssistantBubble() {
   };
 
   const handleSaveApiKey = () => {
-    setApiKey(tempApiKey);
+    const trimmed = tempApiKey.trim();
+    if (trimmed && !GeminiAssistantService.isValidKey(trimmed)) {
+      Alert.alert(
+        'Khóa API không hợp lệ',
+        'Gemini API Key của Google thường bắt đầu bằng AIzaSy và có 39 ký tự. Vui lòng kiểm tra lại.'
+      );
+      return;
+    }
+    setApiKey(trimmed);
     setShowConfigModal(false);
     void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+  };
+
+  const handleClearApiKey = () => {
+    setApiKey('');
+    setTempApiKey('');
+    setShowConfigModal(false);
+    void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
   };
 
   const handleActionClick = (action: string) => {
@@ -383,7 +408,14 @@ export function FloatingAssistantBubble() {
               </Pressable>
 
               {/* Center: Title & Online Status */}
-              <View style={styles.headerCenter}>
+              <Pressable
+                style={styles.headerCenter}
+                onPress={() => {
+                  setTempApiKey(apiKey);
+                  setShowConfigModal(true);
+                }}
+                hitSlop={8}
+              >
                 <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                   <Text style={[typo.titleMedium, { color: colors.text, fontWeight: '700', fontSize: 16 }]}>
                     {'Bác sĩ\u00A0'}
@@ -391,19 +423,47 @@ export function FloatingAssistantBubble() {
                   <Text style={[typo.titleMedium, { color: colors.primary, fontWeight: '700', fontSize: 16 }]}>
                     {'Thú y AI'}
                   </Text>
-                  <View style={styles.geminiBadge}>
-                    <Text style={{ fontSize: 9, color: '#16A34A', fontWeight: '800' }}>
-                      Gemini
+                  <View
+                    style={[
+                      styles.geminiBadge,
+                      {
+                        backgroundColor: GeminiAssistantService.isValidKey(apiKey)
+                          ? '#DCFCE7'
+                          : colors.primaryContainer,
+                      },
+                    ]}
+                  >
+                    <Text
+                      style={{
+                        fontSize: 9,
+                        color: GeminiAssistantService.isValidKey(apiKey)
+                          ? '#16A34A'
+                          : colors.primary,
+                        fontWeight: '800',
+                      }}
+                    >
+                      {GeminiAssistantService.isValidKey(apiKey) ? 'Gemini LLM' : 'PawCare AI'}
                     </Text>
                   </View>
                 </View>
                 <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 2 }}>
-                  <View style={styles.greenPulseDot} />
+                  <View
+                    style={[
+                      styles.greenPulseDot,
+                      {
+                        backgroundColor: GeminiAssistantService.isValidKey(apiKey)
+                          ? '#16A34A'
+                          : colors.primary,
+                      },
+                    ]}
+                  />
                   <Text style={[typo.caption, { color: colors.textSecondary, fontSize: 11, marginLeft: 4 }]}>
-                    Trực tuyến 24/7 • Hỗ trợ lâm sàng
+                    {GeminiAssistantService.isValidKey(apiKey)
+                      ? 'Trực tuyến 24/7 • Google Gemini'
+                      : 'Trực tuyến 24/7 • Y khoa Nội bộ'}
                   </Text>
                 </View>
-              </View>
+              </Pressable>
 
               {/* Right: New Chat (+), History & Clear */}
               <View style={styles.headerRightActions}>
@@ -464,6 +524,7 @@ export function FloatingAssistantBubble() {
                 <FlatList
                   horizontal
                   showsHorizontalScrollIndicator={false}
+                  removeClippedSubviews={false}
                   data={[{ id: 'all', name: 'Tất cả' }, ...pets]}
                   keyExtractor={(item) => item.id}
                   renderItem={({ item }) => {
@@ -518,6 +579,7 @@ export function FloatingAssistantBubble() {
             keyExtractor={(item) => item.id}
             renderItem={renderMessageItem}
             contentContainerStyle={styles.messageList}
+            removeClippedSubviews={false}
             onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: true })}
             ListFooterComponent={
               isLoading ? (
@@ -636,6 +698,8 @@ export function FloatingAssistantBubble() {
                 multiline
                 maxLength={500}
                 editable={!isLoading}
+                returnKeyType="send"
+                onSubmitEditing={() => void handleSend()}
               />
 
               {/* Right Action: Mic if empty, Up-arrow send button when typing */}
@@ -734,6 +798,7 @@ export function FloatingAssistantBubble() {
                   <FlatList
                     data={conversations}
                     keyExtractor={(item) => item.id}
+                    removeClippedSubviews={false}
                     style={{ maxHeight: 380 }}
                     renderItem={({ item }) => {
                       const isActive = activeConversationId === item.id;
@@ -826,22 +891,59 @@ export function FloatingAssistantBubble() {
                   },
                 ]}
               >
-                <View style={styles.configModalHeader}>
-                  <MaterialCommunityIcons name="key-chain" size={24} color={colors.primary} />
-                  <Text style={[typo.titleMedium, { color: colors.text, marginLeft: 8, fontWeight: '700' }]}>
-                    Google Gemini API Key
+                <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: spacing.sm }}>
+                  <MaterialCommunityIcons name="robot-happy-outline" size={26} color={colors.primary} />
+                  <Text style={[typo.titleLarge, { color: colors.text, fontWeight: '700', marginLeft: 8 }]}>
+                    Bác sĩ Thú y AI (PawCare)
                   </Text>
                 </View>
 
-                <Text style={[typo.bodySmall, { color: colors.textSecondary, marginTop: 8 }]}>
-                  Ứng dụng đã được tích hợp sẵn API Key mặc định của bạn:
+                {/* Trạng thái động cơ AI hiện tại */}
+                <View
+                  style={{
+                    backgroundColor: GeminiAssistantService.isValidKey(apiKey) ? '#DCFCE7' : '#E0F2FE',
+                    borderRadius: radius.md,
+                    padding: spacing.sm,
+                    marginBottom: spacing.sm,
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                  }}
+                >
+                  <MaterialCommunityIcons
+                    name={GeminiAssistantService.isValidKey(apiKey) ? 'check-circle' : 'shield-check'}
+                    size={18}
+                    color={GeminiAssistantService.isValidKey(apiKey) ? '#16A34A' : '#0284C7'}
+                  />
+                  <Text
+                    style={[
+                      typo.labelMedium,
+                      {
+                        color: GeminiAssistantService.isValidKey(apiKey) ? '#16A34A' : '#0284C7',
+                        marginLeft: 6,
+                        fontWeight: '700',
+                      },
+                    ]}
+                  >
+                    {GeminiAssistantService.isValidKey(apiKey)
+                      ? 'Đang dùng Google Gemini Cloud (LLM)'
+                      : 'Đang dùng Trợ lý Thú y PawCare (Nội bộ)'}
+                  </Text>
+                </View>
+
+                <Text style={[typo.bodySmall, { color: colors.textSecondary, lineHeight: 19, marginBottom: spacing.sm }]}>
+                  Ứng dụng tích hợp sẵn kho tri thức y khoa thú y chuẩn lâm sàng (hoạt động 100% Offline). Nếu muốn kích hoạt mô hình ngôn ngữ lớn trực tuyến của Google, bạn có thể nhập Gemini API Key cá nhân miễn phí từ aistudio.google.com bên dưới:
                 </Text>
 
+                <Text style={[typo.labelMedium, { color: colors.text, fontWeight: '700', marginBottom: 4 }]}>
+                  Khóa Google Gemini API Key:
+                </Text>
                 <TextInput
                   value={tempApiKey}
                   onChangeText={setTempApiKey}
-                  placeholder="Nhập API key mới..."
+                  placeholder="AIzaSy..."
                   placeholderTextColor={colors.textTertiary}
+                  autoCapitalize="none"
+                  autoCorrect={false}
                   style={[
                     styles.configInput,
                     {
@@ -851,11 +953,18 @@ export function FloatingAssistantBubble() {
                       color: colors.text,
                     },
                   ]}
-                  autoCapitalize="none"
-                  autoCorrect={false}
                 />
 
                 <View style={styles.configModalActions}>
+                  {Boolean(apiKey) && (
+                    <Pressable
+                      onPress={handleClearApiKey}
+                      style={[styles.configCancelBtn, { borderColor: colors.error, borderWidth: 1, borderRadius: radius.md, marginRight: 8 }]}
+                    >
+                      <Text style={[typo.labelMedium, { color: colors.error, fontWeight: '600' }]}>Xóa khóa</Text>
+                    </Pressable>
+                  )}
+
                   <Pressable
                     onPress={() => setShowConfigModal(false)}
                     style={[styles.configCancelBtn, { borderColor: colors.border, borderRadius: radius.md }]}

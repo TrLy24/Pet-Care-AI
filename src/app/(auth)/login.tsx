@@ -26,7 +26,6 @@ import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 
 import { AuthHeader } from '@/presentation/components/AuthHeader';
@@ -41,9 +40,10 @@ import { loginSchema, type LoginFormData } from '@/presentation/validation';
 export default function LoginScreen() {
   const { colors, typography: typo, spacing, radius } = useAppTheme();
   const insets = useSafeAreaInsets();
-  const { login, loginWithGoogle, isLoading, error, clearError, resendSignUpOtp } = useAuthStore();
+  const { login, loginWithGoogle, loginAsGuest, isLoading, error, clearError, resendSignUpOtp } = useAuthStore();
   const [showPassword, setShowPassword] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
+  const [isGuestLoading, setIsGuestLoading] = useState(false);
 
   const {
     control,
@@ -95,6 +95,19 @@ export default function LoginScreen() {
       setIsGoogleLoading(false);
     }
   }, [loginWithGoogle]);
+
+  const handleGuestLogin = useCallback(async () => {
+    setIsGuestLoading(true);
+    void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    try {
+      const success = await loginAsGuest();
+      if (success) {
+        router.replace('/(app)' as any);
+      }
+    } finally {
+      setIsGuestLoading(false);
+    }
+  }, [loginAsGuest]);
 
   const handleForgotPassword = useCallback(() => {
     router.push('/(auth)/forgot-password' as any);
@@ -163,6 +176,23 @@ export default function LoginScreen() {
                   >
                     <Text style={[typo.labelMedium, { color: colors.primary, textDecorationLine: 'underline', fontWeight: '700' }]}>
                       👉 Bấm vào đây để gửi lại email kích hoạt
+                    </Text>
+                  </Pressable>
+                )}
+                {(error.includes('Supabase') || error.includes('máy chủ') || error.includes('kết nối')) && (
+                  <Pressable
+                    onPress={handleGuestLogin}
+                    style={{
+                      backgroundColor: colors.primary,
+                      paddingVertical: 8,
+                      paddingHorizontal: 12,
+                      borderRadius: radius.sm,
+                      marginTop: 10,
+                      alignSelf: 'flex-start',
+                    }}
+                  >
+                    <Text style={[typo.labelSmall, { color: colors.onPrimary, fontWeight: '700' }]}>
+                      ⚡ Tiếp tục bằng Chế độ Khách (Offline)
                     </Text>
                   </Pressable>
                 )}
@@ -272,8 +302,28 @@ export default function LoginScreen() {
                 provider="google"
                 onPress={handleGoogleLogin}
                 loading={isGoogleLoading}
-                disabled={isLoading || isGoogleLoading}
+                disabled={isLoading || isGoogleLoading || isGuestLoading}
               />
+            </Animated.View>
+
+            {/* Guest Offline Button */}
+            <Animated.View entering={FadeInDown.delay(700).duration(400)} style={{ marginTop: spacing.sm }}>
+              <Pressable
+                onPress={handleGuestLogin}
+                disabled={isLoading || isGoogleLoading || isGuestLoading}
+                style={[
+                  styles.guestButton,
+                  {
+                    borderColor: colors.border,
+                    borderRadius: radius.md,
+                    backgroundColor: colors.surfaceElevated,
+                  },
+                ]}
+              >
+                <Text style={[typo.labelLarge, { color: colors.textSecondary }]}>
+                  {isGuestLoading ? 'Đang mở chế độ ngoại tuyến...' : '⚡ Trải nghiệm ngay (Chế độ Khách / Offline)'}
+                </Text>
+              </Pressable>
             </Animated.View>
 
             {/* Register link */}
@@ -321,6 +371,12 @@ const styles = StyleSheet.create({
   },
   dividerRow: {
     flexDirection: 'row',
+    alignItems: 'center',
+  },
+  guestButton: {
+    height: 48,
+    borderWidth: 1,
+    justifyContent: 'center',
     alignItems: 'center',
   },
   dividerLine: {

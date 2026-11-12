@@ -39,29 +39,44 @@ NGUYÊN TẮC HOẠT ĐỘNG:
 - Dùng emoji sinh động, câu từ tự nhiên, mạch lạc, dễ đọc trên điện thoại.
 `;
 
-const BUILTIN_KEY_B64 = 'QVEuQWI4Uk42SmNGTE52eVZ1WE1Zb2hFMkNhV3dkM3pIUUdWajVXWmxpanI4Sk80X1ZYZGc=';
-
-function getBuiltinKey(): string {
-  try {
-    return atob(BUILTIN_KEY_B64);
-  } catch {
-    return '';
-  }
-}
-
 const CANDIDATE_MODELS = [
+  'gemini-3.1-flash-lite',
   'gemini-flash-lite-latest',
-  'gemini-3.6-flash',
   'gemini-3.5-flash-lite',
-  'gemini-3.5-flash',
+  'gemini-3.8-flash',
+  'gemini-flash-latest',
 ];
 
 export class GeminiAssistantService {
   /**
-   * Get effective API key from parameter, environment, or built-in fallback
+   * Kiểm tra xem API Key có phải là Google Gemini Key hợp lệ không
+   */
+  static isValidKey(key?: string | null): boolean {
+    if (!key) return false;
+    const trimmed = key.trim();
+    if (
+      trimmed.startsWith('your_') ||
+      trimmed.includes('placeholder') ||
+      trimmed.length < 30 ||
+      trimmed === 'your_gemini_api_key_here'
+    ) {
+      return false;
+    }
+    // Google Gemini API Key chuẩn bắt đầu bằng AIzaSy hoặc AQ.
+    return trimmed.startsWith('AIzaSy') || trimmed.startsWith('AQ.');
+  }
+
+  /**
+   * Lấy API Key khả dụng (chỉ trả về key nếu thực sự hợp lệ)
    */
   static getEffectiveApiKey(customKey?: string): string {
-    return customKey?.trim() || process.env.EXPO_PUBLIC_GEMINI_API_KEY || getBuiltinKey();
+    const custom = customKey?.trim();
+    if (this.isValidKey(custom)) return custom!;
+
+    const env = process.env.EXPO_PUBLIC_GEMINI_API_KEY?.trim();
+    if (this.isValidKey(env)) return env!;
+
+    return '';
   }
 
   /**
@@ -70,6 +85,7 @@ export class GeminiAssistantService {
   static async consult(request: GeminiConsultationRequest): Promise<{ text: string; suggestedActions?: string[] }> {
     const apiKey = this.getEffectiveApiKey(request.apiKey);
 
+    // Nếu không có API Key hợp lệ: Sử dụng hệ thống tri thức thú y nội bộ PawCare ngay lập tức
     if (!apiKey) {
       return this.generateSmartFallback(request.userQuery, request.petContext);
     }
@@ -140,13 +156,18 @@ export class GeminiAssistantService {
       // Multi-tier model execution: try models in order until success
       let lastErrMsg = '';
       for (const model of CANDIDATE_MODELS) {
+        let timeoutId: ReturnType<typeof setTimeout> | null = null;
         try {
+          const controller = new AbortController();
+          timeoutId = setTimeout(() => controller.abort(), 6000);
           const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
           const response = await fetch(endpoint, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(requestBody),
+            signal: controller.signal,
           });
+          if (timeoutId) clearTimeout(timeoutId);
 
           if (response.ok) {
             const resData = await response.json();
@@ -162,22 +183,19 @@ export class GeminiAssistantService {
           } else {
             const errJson = await response.json().catch(() => ({}));
             lastErrMsg = errJson?.error?.message || `HTTP ${response.status}`;
-            // If high demand (503) or not found (404), continue to next model
-            if (response.status === 503 || response.status === 404) {
-              continue;
-            }
+            continue;
           }
         } catch (e) {
-          lastErrMsg = e instanceof Error ? e.message : 'Lỗi mạng';
+          if (timeoutId) clearTimeout(timeoutId);
+          lastErrMsg = e instanceof Error ? e.message : 'Lỗi kết nối';
         }
       }
 
-      throw new Error(lastErrMsg || 'Tất cả các mô hình Gemini đang bận.');
+      throw new Error(lastErrMsg || 'Không thể kết nối tới Google Gemini.');
     } catch (error) {
-      const err = error instanceof Error ? error.message : 'Lỗi kết nối AI';
       const fallback = this.generateSmartFallback(request.userQuery, request.petContext);
       return {
-        text: `⚠️ [Thông báo: ${err}]\n\n💡 Dưới đây là tư vấn sơ bộ từ hệ thống y khoa PawCare:\n\n${fallback.text}`,
+        text: fallback.text,
         suggestedActions: fallback.suggestedActions,
       };
     }
@@ -259,6 +277,67 @@ export class GeminiAssistantService {
           `  - Mũi 3 (16 tuần): Nhắc lại 4 bệnh + Tiêm phòng dại.\n` +
           `  - Nhắc lại: Mỗi năm tiêm nhắc 1 mũi tổng hợp.`,
         suggestedActions: ['💉 Vào sổ tiêm chủng', '📅 Tạo lịch nhắc mới'],
+      };
+    }
+
+    if (q.includes('tiêu chảy') || q.includes('đi ngoài') || q.includes('phân lỏng') || q.includes('phân đen') || q.includes('phân máu')) {
+      return {
+        text: `🚨 Hướng dẫn xử lý khi ${petName} bị tiêu chảy / đi ngoài phân lỏng:\n\n` +
+          `1. Bù nước & điện giải: Tiêu chảy gây mất nước nhanh, hãy pha oresol cho thú cưng uống từng lượng nhỏ.\n` +
+          `2. Chế độ ăn nhẹ: Cho nhịn ăn 6-8 tiếng để đường ruột nghỉ ngơi, sau đó cho ăn cháo loãng nấu ức gà luộc xé nhỏ (không nêm gia vị, không dầu mỡ).\n` +
+          `3. Tuyệt đối tránh: Không cho uống sữa bò, ăn đồ sống, thức ăn nhiều đạm béo hay đồ ngọt.\n` +
+          `4. CẢNH BÁO NGUY HIỂM: Nếu phân có lẫn máu tươi, phân đen như bã cà phê, mùi tanh khắm hoặc kèm sốt, nôn ói liên tục (dấu hiệu Parvo / Care / Viêm tụy cấp), cần đưa bé đến phòng khám thú y NGAY LẬP TỨC.`,
+        suggestedActions: ['🚨 Dấu hiệu nguy cấp', '🥗 Chế độ ăn phục hồi đường ruột'],
+      };
+    }
+
+    if (q.includes('ngứa') || q.includes('rụng lông') || q.includes('nấm') || q.includes('ve') || q.includes('rận') || q.includes('bọ chét') || q.includes('viêm da')) {
+      return {
+        text: `🩺 Tư vấn da lông & ký sinh trùng cho ${petName}${petBreed}:\n\n` +
+          `1. Nấm da (Ringworm): Thường xuất hiện đốm rụng lông hình tròn, vảy trắng, ngứa ngáy. Cần cách ly, bôi thuốc đặc trị nấm (Ketoconazole) và tắm sữa tắm trị nấm 1-2 lần/tuần.\n` +
+          `2. Ve, rận, bọ chét: Sử dụng thuốc nhỏ gáy hoặc viên nhai định kỳ (Bravecto, NexGard, Revolution). Giặt sạch đệm nằm và xịt khử khuẩn môi trường sống.\n` +
+          `3. Viêm da dị ứng: Có thể do dị ứng thức ăn (đạm bò, gà) hoặc hóa chất lau sàn. Hãy chuyển sang hạt hạt ít gây dị ứng (Hypoallergenic).\n` +
+          `4. Lưu ý: Không tự ý dùng thuốc bôi ngoài da của người chứa corticoid liều cao cho chó mèo vì có thể gây nhiễm độc gan thận khi bé liếm phải.`,
+        suggestedActions: ['🧴 Cách phòng ngừa ve rận', '🥗 Thức ăn dị ứng da lông'],
+      };
+    }
+
+    if (q.includes('độc') || q.includes('socola') || q.includes('chocolate') || q.includes('hành') || q.includes('tỏi') || q.includes('nho') || q.includes('xương')) {
+      return {
+        text: `⚠️ CẢNH BÁO THỰC PHẨM & DỊ VẬT NGUY HIỂM CHO THÚ CƯNG:\n\n` +
+          `1. Sô-cô-la: Chứa Theobromine gây co giật, suy tim cấp ở chó mèo. Càng là socola đen nguyên chất thì độc tính càng cao.\n` +
+          `2. Hành, tỏi, hẹ: Phá hủy hồng cầu gây thiếu máu tán huyết cấp tính.\n` +
+          `3. Nho tươi & nho khô: Gây suy thận cấp không hồi phục chỉ với vài quả.\n` +
+          `4. Xương gia cầm nấu chín: Xương gà/vịt dễ gãy vụn tạo cạnh sắc nhọn làm rách họng, thủng dạ dày ruột.\n` +
+          `5. Chất ngọt nhân tạo Xylitol (trong kẹo cao su, bơ đậu phộng): Khiến tụt đường huyết đột ngột và suy gan.\n\n` +
+          `🚨 SƠ CỨU: Nếu bé vừa nuốt phải trong vòng 1-2 giờ, hãy liên hệ và mang bé đến trạm thú y cấp cứu gần nhất để bác sĩ hỗ trợ gây nôn chuyên khoa!`,
+        suggestedActions: ['🚨 Dấu hiệu ngộ độc', '🥗 Thực phẩm an toàn'],
+      };
+    }
+
+    if (q.includes('ăn') || q.includes('dinh dưỡng') || q.includes('khẩu phần') || q.includes('hạt') || q.includes('pate') || q.includes('cân nặng')) {
+      return {
+        text: `🥗 Hướng dẫn dinh dưỡng chuẩn cho ${petName}${petBreed}:\n\n` +
+          `1. Định lượng khẩu phần mỗi ngày:\n` +
+          `  - Chó mèo trưởng thành: Khoảng 2.5% - 3.5% trọng lượng cơ thể/ngày.\n` +
+          `  - Chó mèo con đang phát triển: Khoảng 4% - 6% trọng lượng cơ thể/ngày, chia làm 3 - 4 bữa nhỏ.\n` +
+          `2. Nguyên tắc đổi thức ăn (Quy tắc 7 ngày):\n` +
+          `  - Ngày 1-2: 75% hạt cũ + 25% hạt mới.\n` +
+          `  - Ngày 3-4: 50% hạt cũ + 50% hạt mới.\n` +
+          `  - Ngày 5-6: 25% hạt cũ + 75% hạt mới.\n` +
+          `  - Ngày 7: 100% hạt mới (giúp hệ tiêu hóa thích nghi, không bị tiêu chảy).\n` +
+          `3. Luôn chuẩn bị nước sạch 24/7 để bảo vệ thận và bàng quang.`,
+        suggestedActions: ['🥗 Xem khẩu phần chi tiết', '🍖 Thực đơn tự nấu'],
+      };
+    }
+
+    if (q.includes('triệt sản') || q.includes('thiến') || q.includes('động dục') || q.includes('gào đực') || q.includes('sa tử cung')) {
+      return {
+        text: `🩺 Tư vấn triệt sản & sinh sản cho ${petName}:\n\n` +
+          `1. Thời điểm lý tưởng: Từ 6 - 8 tháng tuổi (trước kỳ động dục đầu tiên hoặc sau khi kết thúc kỳ salo).\n` +
+          `2. Lợi ích sức khỏe: Giúp đực bớt đánh nhau, xịt nước tiểu đánh dấu lãnh thổ; giúp cái phòng ngừa 90% nguy cơ ung thư vú và viêm tử cung tích mủ.\n` +
+          `3. Chăm sóc hậu phẫu: Cho bé đeo loa chống liếm (vòng Elizabeth) liên tục 7-10 ngày, giữ vết mổ khô ráo, hạn chế chạy nhảy leo trèo.`,
+        suggestedActions: ['💊 Chăm sóc sau phẫu thuật', '🥗 Dinh dưỡng sau triệt sản'],
       };
     }
 

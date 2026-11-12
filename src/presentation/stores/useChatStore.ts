@@ -13,6 +13,7 @@ import type { ChatConversation, ChatMessage } from '@/domain/entities/ChatMessag
 import { GeminiAssistantService, type PetContext } from '@/domain/services/GeminiAssistantService';
 import { ChatHistoryDao } from '@/data/local/ChatHistoryDao';
 import { ChatRepositorySupabase } from '@/data/repositories/ChatRepositorySupabase';
+import { ExpoSecureStoreAdapter } from '@/data/remote/supabaseClient';
 
 const chatRepo = new ChatRepositorySupabase();
 
@@ -49,7 +50,8 @@ interface ChatStoreState {
   clearCurrentConversation: () => Promise<void>;
   clearHistory: () => Promise<void>;
   sendMessage: (text: string) => Promise<void>;
-  setApiKey: (key: string) => void;
+  setApiKey: (key: string) => Promise<void>;
+  loadApiKey: () => Promise<void>;
   setActivePetContext: (pet: PetContext | null) => void;
   openChatModal: () => void;
   closeChatModal: () => void;
@@ -66,7 +68,7 @@ export const useChatStore = create<ChatStoreState>((set, get) => ({
   conversations: [],
   messages: [INITIAL_WELCOME_MESSAGE],
   isLoading: false,
-  apiKey: process.env.EXPO_PUBLIC_GEMINI_API_KEY || '',
+  apiKey: GeminiAssistantService.getEffectiveApiKey(),
   activePetContext: null,
   isChatModalOpen: false,
   isHistoryModalOpen: false,
@@ -175,7 +177,30 @@ export const useChatStore = create<ChatStoreState>((set, get) => ({
     }
   },
 
-  setApiKey: (key: string) => set({ apiKey: key.trim() }),
+  loadApiKey: async () => {
+    try {
+      const stored = await ExpoSecureStoreAdapter.getItem('gemini_api_key');
+      if (stored && GeminiAssistantService.isValidKey(stored)) {
+        set({ apiKey: stored });
+      }
+    } catch (e) {
+      console.warn('[useChatStore] loadApiKey error:', e);
+    }
+  },
+
+  setApiKey: async (key: string) => {
+    const trimmed = key.trim();
+    set({ apiKey: trimmed });
+    try {
+      if (trimmed) {
+        await ExpoSecureStoreAdapter.setItem('gemini_api_key', trimmed);
+      } else {
+        await ExpoSecureStoreAdapter.removeItem('gemini_api_key');
+      }
+    } catch (e) {
+      console.warn('[useChatStore] setApiKey persist error:', e);
+    }
+  },
 
   setActivePetContext: (pet: PetContext | null) => set({ activePetContext: pet }),
 
@@ -306,6 +331,8 @@ export const useChatStore = create<ChatStoreState>((set, get) => ({
         messages: [...state.messages, errMsg],
         isLoading: false,
       }));
+    } finally {
+      set({ isLoading: false });
     }
   },
 }));

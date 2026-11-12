@@ -45,6 +45,7 @@ export default function AssistantScreen() {
     sendMessage,
     clearHistory,
     setApiKey,
+    loadApiKey,
     setActivePetContext,
     activePetContext,
   } = useChatStore();
@@ -54,6 +55,15 @@ export default function AssistantScreen() {
   const [inputText, setInputText] = useState('');
   const [showConfigModal, setShowConfigModal] = useState(false);
   const [tempApiKey, setTempApiKey] = useState(apiKey);
+
+  // Tải API Key đã lưu từ bộ nhớ an toàn khi khởi động
+  useEffect(() => {
+    void loadApiKey();
+  }, [loadApiKey]);
+
+  useEffect(() => {
+    setTempApiKey(apiKey);
+  }, [apiKey]);
 
   // Synchronize active pet with global pet store on initial mount
   useEffect(() => {
@@ -97,8 +107,8 @@ export default function AssistantScreen() {
     await sendMessage(text);
   };
 
-  const handleSaveApiKey = () => {
-    setApiKey(tempApiKey);
+  const handleSaveApiKey = async () => {
+    await setApiKey(tempApiKey);
     setShowConfigModal(false);
     void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
   };
@@ -256,9 +266,26 @@ export default function AssistantScreen() {
               <Text style={[typo.titleMedium, { color: colors.text, fontWeight: '700' }]}>
                 Bác sĩ Thú y AI
               </Text>
-              <View style={[styles.onlineBadge, { backgroundColor: '#DCFCE7' }]}>
-                <Text style={{ fontSize: 10, color: '#16A34A', fontWeight: '700' }}>
-                  Gemini LLM
+              <View
+                style={[
+                  styles.onlineBadge,
+                  {
+                    backgroundColor: GeminiAssistantService.isValidKey(apiKey)
+                      ? '#DCFCE7'
+                      : colors.primaryContainer,
+                  },
+                ]}
+              >
+                <Text
+                  style={{
+                    fontSize: 10,
+                    color: GeminiAssistantService.isValidKey(apiKey)
+                      ? '#16A34A'
+                      : colors.primary,
+                    fontWeight: '700',
+                  }}
+                >
+                  {GeminiAssistantService.isValidKey(apiKey) ? 'Gemini LLM' : 'PawCare AI'}
                 </Text>
               </View>
             </View>
@@ -296,6 +323,7 @@ export default function AssistantScreen() {
             <FlatList
               horizontal
               showsHorizontalScrollIndicator={false}
+              removeClippedSubviews={false}
               data={[{ id: null, name: 'Chung' }, ...pets]}
               keyExtractor={(item) => item.id || 'all'}
               contentContainerStyle={{ gap: 6 }}
@@ -349,6 +377,7 @@ export default function AssistantScreen() {
         data={messages}
         keyExtractor={(item) => item.id}
         renderItem={renderMessageItem}
+        removeClippedSubviews={false}
         contentContainerStyle={[
           styles.messageList,
           { paddingBottom: insets.bottom + 90 },
@@ -392,6 +421,8 @@ export default function AssistantScreen() {
             onChangeText={setInputText}
             multiline
             maxLength={1000}
+            returnKeyType="send"
+            onSubmitEditing={() => void handleSend()}
           />
 
           <Pressable
@@ -434,39 +465,95 @@ export default function AssistantScreen() {
               </Text>
             </View>
 
-            <View style={{ backgroundColor: '#DCFCE7', borderRadius: radius.md, padding: spacing.sm, marginBottom: spacing.md, flexDirection: 'row', alignItems: 'center' }}>
-              <MaterialCommunityIcons name="check-circle" size={18} color="#16A34A" />
-              <Text style={[typo.labelMedium, { color: '#16A34A', marginLeft: 6, fontWeight: '700' }]}>
-                Google Gemini AI đã được tích hợp sẵn
+            {/* Trạng thái động cơ AI hiện tại */}
+            <View
+              style={{
+                backgroundColor: GeminiAssistantService.isValidKey(apiKey) ? '#DCFCE7' : '#E0F2FE',
+                borderRadius: radius.md,
+                padding: spacing.sm,
+                marginBottom: spacing.md,
+                flexDirection: 'row',
+                alignItems: 'center',
+              }}
+            >
+              <MaterialCommunityIcons
+                name={GeminiAssistantService.isValidKey(apiKey) ? 'check-circle' : 'shield-check'}
+                size={18}
+                color={GeminiAssistantService.isValidKey(apiKey) ? '#16A34A' : '#0284C7'}
+              />
+              <Text
+                style={[
+                  typo.labelMedium,
+                  {
+                    color: GeminiAssistantService.isValidKey(apiKey) ? '#16A34A' : '#0284C7',
+                    marginLeft: 6,
+                    fontWeight: '700',
+                  },
+                ]}
+              >
+                {GeminiAssistantService.isValidKey(apiKey)
+                  ? 'Đang dùng Google Gemini Cloud (LLM)'
+                  : 'Đang dùng Trợ lý Thú y PawCare (Nội bộ)'}
               </Text>
             </View>
 
-            <Text style={[typo.bodySmall, { color: colors.text, lineHeight: 20, marginBottom: spacing.md }]}>
-              Tính năng Generative AI sử dụng mô hình Google Gemini AI thế hệ mới để tư vấn chăm sóc sức khỏe, sơ cứu, phân tích hành vi và đề xuất dinh dưỡng thú y theo thời gian thực.
+            <Text style={[typo.bodySmall, { color: colors.textSecondary, lineHeight: 19, marginBottom: spacing.sm }]}>
+              Ứng dụng tích hợp sẵn kho tri thức y khoa thú y chuẩn lâm sàng (hoạt động 100% Offline). Nếu muốn kích hoạt mô hình ngôn ngữ lớn trực tuyến của Google, bạn có thể nhập Gemini API Key cá nhân miễn phí từ aistudio.google.com bên dưới:
             </Text>
 
-            <View style={{ backgroundColor: colors.surfaceElevated, borderRadius: radius.md, padding: spacing.sm, marginBottom: spacing.md, gap: 6 }}>
-              <Text style={[typo.labelSmall, { color: colors.text, fontWeight: '700' }]}>
-                ✨ Các tính năng nổi bật:
-              </Text>
-              <Text style={[typo.caption, { color: colors.textSecondary }]}>
-                • Tự động gắn thông tin thú cưng (tên, giống, cân nặng) vào câu trả lời.
-              </Text>
-              <Text style={[typo.caption, { color: colors.textSecondary }]}>
-                • Đề xuất phác đồ tiêm chủng và khẩu phần ăn chính xác.
-              </Text>
-              <Text style={[typo.caption, { color: colors.textSecondary }]}>
-                • Nhận diện các triệu chứng nguy cấp cần đưa đi viện thú y.
-              </Text>
-            </View>
+            <Text style={[typo.labelMedium, { color: colors.text, fontWeight: '700', marginBottom: 4 }]}>
+              Khóa Google Gemini API Key:
+            </Text>
+            <TextInput
+              value={tempApiKey}
+              onChangeText={setTempApiKey}
+              placeholder="Nhập khóa AIzaSy... (hoặc để trống)"
+              placeholderTextColor={colors.textTertiary}
+              autoCapitalize="none"
+              autoCorrect={false}
+              style={[
+                styles.keyInput,
+                {
+                  backgroundColor: colors.surfaceElevated,
+                  borderColor: colors.border,
+                  color: colors.text,
+                  borderRadius: radius.md,
+                  marginBottom: spacing.md,
+                },
+              ]}
+            />
 
-            <View style={{ flexDirection: 'row', justifyContent: 'flex-end' }}>
+            <View style={{ flexDirection: 'row', justifyContent: 'flex-end', gap: 8 }}>
+              {!!tempApiKey && (
+                <Pressable
+                  onPress={() => {
+                    setTempApiKey('');
+                    void setApiKey('');
+                    void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  }}
+                  style={[styles.modalBtn, { borderWidth: 1, borderColor: colors.border, borderRadius: radius.md }]}
+                >
+                  <Text style={[typo.labelMedium, { color: colors.textSecondary }]}>
+                    Xóa khóa
+                  </Text>
+                </Pressable>
+              )}
+
               <Pressable
                 onPress={() => setShowConfigModal(false)}
+                style={[styles.modalBtn, { borderWidth: 1, borderColor: colors.border, borderRadius: radius.md }]}
+              >
+                <Text style={[typo.labelMedium, { color: colors.text }]}>
+                  Đóng
+                </Text>
+              </Pressable>
+
+              <Pressable
+                onPress={handleSaveApiKey}
                 style={[styles.modalBtn, { backgroundColor: colors.primary, borderRadius: radius.md }]}
               >
                 <Text style={[typo.labelMedium, { color: colors.onPrimary, fontWeight: '700' }]}>
-                  Đã hiểu
+                  Lưu thay đổi
                 </Text>
               </Pressable>
             </View>

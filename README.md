@@ -1,7 +1,6 @@
 # Pet-Care-AI
 
 Ứng dụng chăm sóc thú cưng tích hợp AI nhận diện giống loài và gợi ý dinh dưỡng.
-Đồ án Capstone, học phần Phát triển ứng dụng di động đa nền tảng (VKU).
 
 ## Công nghệ
 - React Native + Expo **SDK 57** + TypeScript + Expo Router
@@ -14,7 +13,7 @@
 2. Trên điện thoại cài **Expo Go bản mới nhất** (App Store hoặc CH Play).
 3. Mở terminal và chạy lần lượt:
 
-        git clone https://github.com/Duy1806/Pet-Care-AI.git
+        git clone https://github.com/trly24/Pet-Care-AI.git
         cd Pet-Care-AI
         npm ci
         npx expo start
