@@ -5,9 +5,6 @@ from app.data.nutrition_rules import get_rules_for_species
 SUPPORTED_SPECIES = {
     "dog": "Cho",
     "cat": "Meo",
-    "bird": "Chim",
-    "rabbit": "Tho",
-    "hamster": "Hamster",
 }
 
 
@@ -61,20 +58,6 @@ def evaluate_nutrition_profile(pet: NutritionRequest) -> dict:
             "Can xem xet nhu cau dinh duong dac thu cua meo "
             "va dam bao thuc an dap ung cac chat dinh duong thiet yeu."
         )
-    elif species == "bird":
-        result["assessment"].append(
-            "Can xac dinh loai chim cu the truoc khi chon che do an."
-        )
-    elif species == "rabbit":
-        result["assessment"].append(
-            "Can uu tien che do an dac thu cho tho, co kho phu hop "
-            "va nuoc sach."
-        )
-    elif species == "hamster":
-        result["assessment"].append(
-            "Can chon thuc an phu hop voi loai hamster va "
-            "nhu cau cua tung ca the."
-        )
 
     # 3. Ap dung cac quy tac dinh duong phu hop
     available_rules = get_rules_for_species(species)
@@ -90,10 +73,7 @@ def evaluate_nutrition_profile(pet: NutritionRequest) -> dict:
         elif condition == "overweight":
             should_apply = pet.body_condition == "overweight"
         elif condition == "unknown_breed":
-            should_apply = (
-                species in ("bird", "hamster")
-                and not pet.breed
-            )
+            should_apply = not pet.breed
 
         if not should_apply:
             continue

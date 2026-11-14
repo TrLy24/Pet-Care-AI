@@ -42,11 +42,8 @@ IMAGENET_MEAN = [0.485, 0.456, 0.406]
 IMAGENET_STD = [0.229, 0.224, 0.225]
 
 SUPPORTED_SPECIES = [
-    "bird",
     "cat",
     "dog",
-    "hamster",
-    "rabbit",
 ]
 
 
@@ -57,9 +54,6 @@ SUPPORTED_SPECIES = [
 SPECIES_VI = {
     "dog": "Chó",
     "cat": "Mèo",
-    "bird": "Chim",
-    "rabbit": "Thỏ",
-    "hamster": "Chuột Hamster",
 }
 
 BREED_VI = {
@@ -103,28 +97,6 @@ BREED_VI = {
     "staffordshire_bull_terrier": "Staffordshire Bull Terrier",
     "wheaten_terrier": "Wheaten Terrier",
     "yorkshire_terrier": "Yorkshire Terrier",
-
-    # --- BIRD BREEDS (10) ---
-    "ALEXANDRINE PARAKEET": "Vẹt Alexandrine",
-    "CANARY": "Chim Yến hót (Canary)",
-    "COCKATOO": "Vẹt Mào (Cockatoo)",
-    "EASTERN ROSELLA": "Vẹt Rosella phương Đông",
-    "GOLDEN PARAKEET": "Vẹt Vàng (Golden Parakeet)",
-    "GOULDIAN FINCH": "Chim Bảy màu (Gouldian Finch)",
-    "HYACINTH MACAW": "Vẹt Macaw Xanh Lam (Hyacinth Macaw)",
-    "JAVA SPARROW": "Chim Manh Nhật (Sẻ Java)",
-    "RAINBOW LORIKEET": "Vẹt Cầu Vồng (Rainbow Lorikeet)",
-    "ROSY FACED LOVEBIRD": "Vẹt Mẫu Đơn mặt hồng (Lovebird)",
-
-    # --- HAMSTER BREEDS (2) ---
-    "Syrian": "Chuột Hamster Bear (Syrian)",
-    "Winter": "Chuột Hamster Winter White",
-
-    # --- RABBIT BREEDS (4) ---
-    "californian": "Thỏ California",
-    "holland-lop": "Thỏ tai cụp Holland Lop",
-    "lionhead": "Thỏ sư tử (Lionhead)",
-    "new-zealand": "Thỏ New Zealand trắng",
 }
 
 
@@ -207,7 +179,7 @@ def get_species_predictor():
 @lru_cache(maxsize=8)
 def get_breed_predictor(species: str):
     """
-    Nạp mô hình phân loại giống chuyên biệt cho loài (bird, cat, dog, hamster, rabbit).
+    Nạp mô hình phân loại giống chuyên biệt cho loài (chó, mèo).
     Được cache trong bộ nhớ để tái sử dụng tối đa.
     """
     species = species.lower().strip()

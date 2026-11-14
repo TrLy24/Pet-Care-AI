@@ -7,9 +7,6 @@ from pydantic import BaseModel, Field, model_validator
 Species = Literal[
     "dog",
     "cat",
-    "bird",
-    "rabbit",
-    "hamster",
 ]
 
 ActivityLevel = Literal[
@@ -67,15 +64,16 @@ class NutritionRequest(BaseModel):
 
     @model_validator(mode="after")
     def validate_species_input(self):
-        if self.species == "hamster" and self.weight_kg > 1:
+        if self.species == "cat" and self.weight_kg > 30:
             raise ValueError(
-                "Can kiem tra lai can nang hamster; "
-                "gia tri tren 1 kg bat thuong."
+                "Can kiem tra lai can nang meo; "
+                "gia tri tren 30 kg bat thuong."
             )
 
-        if self.species == "rabbit" and self.weight_kg > 20:
+        if self.species == "dog" and self.weight_kg > 150:
             raise ValueError(
-                "Can kiem tra lai can nang tho."
+                "Can kiem tra lai can nang cho; "
+                "gia tri tren 150 kg bat thuong."
             )
 
         return self

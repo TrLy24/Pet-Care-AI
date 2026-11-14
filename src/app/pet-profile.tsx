@@ -183,10 +183,10 @@ export default function PetProfileScreen() {
 
   // Daily Nutrition calculation for current pet
   const nutritionResult = useMemo(() => {
-    if (!currentPet || currentPet.species === 'other') return null;
+    if (!currentPet) return null;
     try {
       return calculateNutrition({
-        species: currentPet.species as 'dog' | 'cat',
+        species: currentPet.species,
         weightKg: currentPet.weightKg > 0 ? currentPet.weightKg : 4.0,
         lifeStage: 'adult',
         isNeutered: Boolean(currentPet.isNeutered),

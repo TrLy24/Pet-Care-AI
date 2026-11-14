@@ -38,14 +38,31 @@ class NutritionValidationTests(unittest.TestCase):
         with self.assertRaises(ValidationError):
             NutritionRequest(**{**BASE_DATA, "activity_level": "extreme"})
 
-    def test_reject_hamster_weight_over_one_kg(self):
+    def test_reject_non_dog_cat_species(self):
         with self.assertRaises(ValidationError):
             NutritionRequest(
                 **{
                     **BASE_DATA,
                     "species": "hamster",
                     "breed": None,
-                    "weight_kg": 1.5,
+                }
+            )
+        with self.assertRaises(ValidationError):
+            NutritionRequest(
+                **{
+                    **BASE_DATA,
+                    "species": "bird",
+                    "breed": None,
+                }
+            )
+
+    def test_reject_cat_weight_over_thirty_kg(self):
+        with self.assertRaises(ValidationError):
+            NutritionRequest(
+                **{
+                    **BASE_DATA,
+                    "species": "cat",
+                    "weight_kg": 35,
                 }
             )
 

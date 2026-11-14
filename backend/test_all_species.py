@@ -21,36 +21,9 @@ test_cases = [
         "activity_level": "moderate",
         "body_condition": "overweight",
     },
-    {
-        "species": "bird",
-        "breed": None,
-        "age_months": 12,
-        "weight_kg": 0.1,
-        "life_stage": "adult",
-        "activity_level": "moderate",
-        "body_condition": "unknown",
-    },
-    {
-        "species": "rabbit",
-        "breed": None,
-        "age_months": 12,
-        "weight_kg": 2,
-        "life_stage": "adult",
-        "activity_level": "moderate",
-        "body_condition": "ideal",
-    },
-    {
-        "species": "hamster",
-        "breed": None,
-        "age_months": 6,
-        "weight_kg": 0.1,
-        "life_stage": "adult",
-        "activity_level": "moderate",
-        "body_condition": "ideal",
-    },
 ]
 
-print("=== KIEM THU DINH DUONG 5 LOAI ===")
+print("=== KIEM THU DINH DUONG CHO & MEO ===")
 
 for data in test_cases:
     pet = NutritionRequest(**data)

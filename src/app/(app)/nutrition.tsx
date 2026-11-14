@@ -57,16 +57,16 @@ export default function NutritionScreen() {
 
   // Initial values from params or active pet
   const initialProfile = findBreedNutritionProfile(params.breed || selectedPet?.breedName || selectedPet?.breed);
-  const initialSpecies: 'dog' | 'cat' | 'bird' | 'hamster' | 'rabbit' =
+  const initialSpecies: 'dog' | 'cat' =
     initialProfile?.species ||
-    (params.species && ['dog', 'cat', 'bird', 'hamster', 'rabbit'].includes(params.species)
+    (params.species && ['dog', 'cat'].includes(params.species)
       ? (params.species as any)
-      : selectedPet?.species && ['dog', 'cat', 'bird', 'hamster', 'rabbit'].includes(selectedPet.species)
+      : selectedPet?.species && ['dog', 'cat'].includes(selectedPet.species)
       ? (selectedPet.species as any)
       : 'dog');
 
   // Input states
-  const [species, setSpecies] = useState<'dog' | 'cat' | 'bird' | 'hamster' | 'rabbit'>(
+  const [species, setSpecies] = useState<'dog' | 'cat'>(
     () => initialProfile?.species || initialSpecies
   );
   const [selectedBreedKey, setSelectedBreedKey] = useState<string>(() => initialProfile?.id || '');
@@ -77,9 +77,6 @@ export default function NutritionScreen() {
     if (selectedPet?.weightKg && selectedPet.weightKg > 0) return selectedPet.weightKg;
     if (initialProfile) return (initialProfile.typicalWeightKg.min + initialProfile.typicalWeightKg.max) / 2;
     if (initialSpecies === 'cat') return 4.0;
-    if (initialSpecies === 'bird') return 0.15;
-    if (initialSpecies === 'hamster') return 0.12;
-    if (initialSpecies === 'rabbit') return 2.0;
     return 8.0;
   });
   const [lifeStage, setLifeStage] = useState<PetLifeStage>('adult');
@@ -106,8 +103,8 @@ export default function NutritionScreen() {
     void Haptics.selectionAsync();
     setSelectedPetId(p.id);
     selectPet(p);
-    const sp: 'dog' | 'cat' | 'bird' | 'hamster' | 'rabbit' =
-      ['dog', 'cat', 'bird', 'hamster', 'rabbit'].includes(p.species) ? (p.species as any) : 'dog';
+    const sp: 'dog' | 'cat' =
+      ['dog', 'cat'].includes(p.species) ? (p.species as any) : 'dog';
     setSpecies(sp);
     if (p.weightKg > 0) {
       setWeightKg(p.weightKg);
@@ -142,15 +139,6 @@ export default function NutritionScreen() {
     if (species === 'cat') {
       return ['british_shorthair', 'persian', 'ragdoll', 'bengal', 'sphynx', 'siamese', 'maine_coon'];
     }
-    if (species === 'bird') {
-      return ['canary', 'cockatoo', 'alexandrine_parakeet', 'rainbow_lorikeet', 'rosy_faced_lovebird', 'hyacinth_macaw'];
-    }
-    if (species === 'hamster') {
-      return ['syrian', 'winter'];
-    }
-    if (species === 'rabbit') {
-      return ['holland-lop', 'lionhead', 'californian', 'new-zealand'];
-    }
     return [];
   }, [species]);
 
@@ -167,7 +155,7 @@ export default function NutritionScreen() {
   }, [availableBreeds, breedSearchText]);
 
   // Handle species switch
-  const handleSwitchSpecies = (newSpecies: 'dog' | 'cat' | 'bird' | 'hamster' | 'rabbit') => {
+  const handleSwitchSpecies = (newSpecies: 'dog' | 'cat') => {
     void Haptics.selectionAsync();
     setSpecies(newSpecies);
     // If current breed does not match new species, reset or switch
@@ -177,9 +165,6 @@ export default function NutritionScreen() {
       const defaultWeights = {
         dog: 8.0,
         cat: 4.0,
-        bird: 0.15,
-        hamster: 0.12,
-        rabbit: 2.0,
       };
       setWeightKg(defaultWeights[newSpecies]);
     }
@@ -403,17 +388,14 @@ export default function NutritionScreen() {
           {/* Species Selector */}
           <View style={styles.inputGroup}>
             <Text style={[typo.labelMedium, { color: colors.text, marginBottom: spacing.xs }]}>
-              Loài thú cưng (5 loài):
+              Loài thú cưng:
             </Text>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>
               {(
                 [
                   { key: 'dog', label: 'Chó', icon: 'dog' },
                   { key: 'cat', label: 'Mèo', icon: 'cat' },
-                  { key: 'bird', label: 'Chim', icon: 'bird' },
-                  { key: 'hamster', label: 'Hamster', icon: 'rodent' },
-                  { key: 'rabbit', label: 'Thỏ', icon: 'rabbit' },
-                ] as { key: 'dog' | 'cat' | 'bird' | 'hamster' | 'rabbit'; label: string; icon: string }[]
+                ] as { key: 'dog' | 'cat'; label: string; icon: string }[]
               ).map((item) => {
                 const isSelected = species === item.key;
                 return (
@@ -1007,7 +989,7 @@ export default function NutritionScreen() {
           ]}
         >
           <Text style={[typo.titleMedium, { color: colors.text, marginBottom: spacing.xs }]}>
-            Cẩm nang an toàn thực phẩm ({species === 'dog' ? 'Chó' : species === 'cat' ? 'Mèo' : species === 'bird' ? 'Chim' : species === 'hamster' ? 'Hamster' : 'Thỏ'})
+            Cẩm nang an toàn thực phẩm ({species === 'dog' ? 'Chó' : 'Mèo'})
           </Text>
 
           <View style={{ marginTop: spacing.xs, gap: spacing.xs }}>
@@ -1017,13 +999,7 @@ export default function NutritionScreen() {
                 <Text style={{ fontWeight: '700', color: '#16A34A' }}>Nên ăn: </Text>
                 {species === 'dog'
                   ? 'Ức gà luộc xé nhỏ, thịt bò nạc, cá hồi gỡ sạch xương, cà rốt, bí ngô hấp chín.'
-                  : species === 'cat'
-                  ? 'Thịt gà xé, pate cá ngừ/cá hồi, thịt nạc bò, taurine bổ sung, nước hầm xương không muối.'
-                  : species === 'bird'
-                  ? 'Viên nén dinh dưỡng pellet, hạt kê, ớt chuông, cà rốt, táo bỏ hạt, rau xà lách sạch, nang mực.'
-                  : species === 'hamster'
-                  ? 'Hạt hỗn hợp ép đùn lab block, cỏ khô Timothy, sâu bột sấy khô (protein), mẩu nhỏ dưa leo/bông cải.'
-                  : '85% cỏ khô Timothy không giới hạn, viên nén cỏ (pellet cỏ), rau mùi, xà lách romaine, thì là tươi.'}
+                  : 'Thịt gà xé, pate cá ngừ/cá hồi, thịt nạc bò, taurine bổ sung, nước hầm xương không muối.'}
               </Text>
             </View>
 
@@ -1033,37 +1009,21 @@ export default function NutritionScreen() {
                 <Text style={{ fontWeight: '700', color: '#DC2626' }}>Cực độc (Nguy hiểm tính mạng): </Text>
                 {species === 'dog'
                   ? 'Socola, hành tây, tỏi, nho & nho khô, bơ, cafein, hạt macca, xương gà sắc nhọn.'
-                  : species === 'cat'
-                  ? 'Hành tây, tỏi, socola, sữa bò có lactose, nho khô, cafein, bột bánh mì lên men.'
-                  : species === 'bird'
-                  ? 'Quả bơ (Persin gây ngừng thở tử vong), socola, cafein, hạt táo/lê (chứa xyanua), muối mặn.'
-                  : species === 'hamster'
-                  ? 'Hành tỏi, socola, đồ ngọt/kẹo bánh (tiểu đường), quả họ cam quýt, hạt táo chua, phô mai dính.'
-                  : 'Bánh mì, gạo, socola, quả bơ, khoai tây mầm, hạt ngũ cốc nhiều tinh bột, sữa động vật.'}
+                  : 'Hành tây, tỏi, socola, sữa bò có lactose, nho khô, cafein, bột bánh mì lên men.'}
               </Text>
             </View>
           </View>
         </View>
       </ScrollView>
 
-      {/* Full 53-Breed Selection Modal */}
+      {/* Full 37-Breed Selection Modal */}
       <Modal visible={showBreedModal} animationType="slide" transparent>
         <View style={styles.modalBackdrop}>
           <View style={[styles.modalContent, { backgroundColor: colors.surface, paddingBottom: insets.bottom + spacing.md }]}>
             {/* Modal Header */}
             <View style={styles.modalHeader}>
               <Text style={[typo.titleLarge, { color: colors.text, fontWeight: '700' }]}>
-                Chọn Giống (
-                {species === 'dog'
-                  ? 'Chó'
-                  : species === 'cat'
-                  ? 'Mèo'
-                  : species === 'bird'
-                  ? 'Chim'
-                  : species === 'hamster'
-                  ? 'Hamster'
-                  : 'Thỏ'}
-                )
+                Chọn Giống ({species === 'dog' ? 'Chó' : 'Mèo'})
               </Text>
               <Pressable
                 onPress={() => setShowBreedModal(false)}

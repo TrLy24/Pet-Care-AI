@@ -58,10 +58,6 @@ export function AddPetModal({ visible, onClose, onSuccess }: AddPetModalProps) {
     const defaultBreedNames: Record<string, string> = {
       dog: 'Chó nhà',
       cat: 'Mèo nhà',
-      bird: 'Chim cảnh',
-      hamster: 'Hamster',
-      rabbit: 'Thỏ cảnh',
-      other: 'Khác',
     };
 
     try {
@@ -191,47 +187,7 @@ export function AddPetModal({ visible, onClose, onSuccess }: AddPetModalProps) {
                 </Pressable>
               ))}
             </View>
-            {/* Row 2: Chim + Hamster + Thỏ */}
-            <View style={[styles.speciesRow, { marginTop: 8 }]}>
-              {(
-                [
-                  { value: 'bird', icon: 'bird', label: 'Chim' },
-                  { value: 'hamster', icon: 'rodent', label: 'Hamster' },
-                  { value: 'rabbit', icon: 'rabbit', label: 'Thỏ' },
-                ] as { value: string; icon: string; label: string }[]
-              ).map((item) => (
-                <Pressable
-                  key={item.value}
-                  onPress={() => setSpecies(item.value as Species)}
-                  style={[
-                    styles.speciesBtn,
-                    {
-                      backgroundColor: species === item.value ? colors.primaryContainer : colors.surfaceElevated,
-                      borderColor: species === item.value ? colors.primary : colors.border,
-                      borderRadius: radius.lg,
-                    },
-                  ]}
-                >
-                  <MaterialCommunityIcons
-                    name={item.icon as any}
-                    size={22}
-                    color={species === item.value ? colors.primary : colors.textSecondary}
-                  />
-                  <Text
-                    style={[
-                      typo.labelMedium,
-                      {
-                        color: species === item.value ? colors.primary : colors.text,
-                        marginLeft: 6,
-                        fontWeight: species === item.value ? '700' : '500',
-                      },
-                    ]}
-                  >
-                    {item.label}
-                  </Text>
-                </Pressable>
-              ))}
-            </View>
+            
 
             {/* Name Input */}
             <View style={{ marginTop: spacing.md }}>

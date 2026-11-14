@@ -14,7 +14,7 @@ interface DbPetRow {
   id: string;
   owner_id: string;
   name: string;
-  species: 'dog' | 'cat' | 'other';
+  species: 'dog' | 'cat';
   breed_id: string | null;
   breed_name_custom: string | null;
   sex: 'male' | 'female' | 'unknown' | null;

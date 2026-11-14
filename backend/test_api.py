@@ -32,45 +32,6 @@ test_cases = [
             "health_notes": None,
         },
     },
-    {
-        "name": "Chim chua ro loai",
-        "data": {
-            "species": "bird",
-            "breed": None,
-            "age_months": 12,
-            "weight_kg": 0.1,
-            "life_stage": "adult",
-            "activity_level": "moderate",
-            "body_condition": "unknown",
-            "health_notes": None,
-        },
-    },
-    {
-        "name": "Tho",
-        "data": {
-            "species": "rabbit",
-            "breed": None,
-            "age_months": 12,
-            "weight_kg": 2,
-            "life_stage": "adult",
-            "activity_level": "moderate",
-            "body_condition": "ideal",
-            "health_notes": None,
-        },
-    },
-    {
-        "name": "Hamster chua ro loai",
-        "data": {
-            "species": "hamster",
-            "breed": None,
-            "age_months": 6,
-            "weight_kg": 0.1,
-            "life_stage": "adult",
-            "activity_level": "moderate",
-            "body_condition": "ideal",
-            "health_notes": None,
-        },
-    },
 ]
 
 print("=== KIEM THU API DINH DUONG ===")
@@ -96,4 +57,16 @@ for case in test_cases:
         f"API that bai voi truong hop: {case['name']}"
     )
 
-print("\n=== TAT CA 5 TRUONG HOP THANH CONG ===")
+# Test reject non-dog/cat
+for non_species in ["bird", "rabbit", "hamster"]:
+    bad_data = {
+        "species": non_species,
+        "age_months": 12,
+        "weight_kg": 2,
+        "life_stage": "adult",
+        "activity_level": "moderate",
+    }
+    resp = client.post("/nutrition/evaluate", json=bad_data)
+    assert resp.status_code == 422, f"Phai tu choi loai {non_species}"
+
+print("\n=== TAT CA TRUONG HOP HOP LE VA TU CHOI THANH CONG ===")
