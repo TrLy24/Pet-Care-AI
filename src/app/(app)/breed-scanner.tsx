@@ -22,7 +22,7 @@ import {
   TextInput,
   View,
 } from 'react-native';
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
@@ -137,6 +137,7 @@ const SAMPLE_PRESETS: { label: string; icon: string; result: BreedAnalysisResult
 export default function BreedScannerScreen() {
   const { colors, typography: typo, spacing, radius } = useAppTheme();
   const insets = useSafeAreaInsets();
+  const params = useLocalSearchParams<{ autoScanUri?: string }>();
   const { breeds, loadBreeds } = useBreedStore();
   const netInfo = useNetInfo();
 
@@ -214,6 +215,29 @@ export default function BreedScannerScreen() {
       }
     })();
   }, [loadBreeds, checkServerStatus]);
+
+  // Khôi phục ảnh chụp nếu hệ điều hành Android giải phóng bộ nhớ khi bật camera
+  useEffect(() => {
+    void (async () => {
+      try {
+        const pending = await ImagePicker.getPendingResultAsync();
+        if (pending && 'assets' in pending && !pending.canceled && pending.assets && pending.assets.length > 0) {
+          const asset = pending.assets[0];
+          setSelectedImageUri(asset.uri);
+          void uploadAndPredict(asset.uri, asset.base64);
+        }
+      } catch (e) {
+        console.warn('getPendingResultAsync error', e);
+      }
+    })();
+  }, []);
+
+  useEffect(() => {
+    if (params.autoScanUri) {
+      setSelectedImageUri(params.autoScanUri);
+      void uploadAndPredict(params.autoScanUri);
+    }
+  }, [params.autoScanUri]);
 
   /**
    * Helper to enrich AI classification output with Supabase breed details & Offline Nutrition Knowledge
@@ -447,10 +471,9 @@ export default function BreedScannerScreen() {
 
       const result = await ImagePicker.launchCameraAsync({
         mediaTypes: ['images'],
-        allowsEditing: true,
-        aspect: [1, 1],
-        quality: 0.8,
-        base64: true,
+        allowsEditing: false, // Tắt cropper rời để tránh Android kill app khi mở camera
+        quality: 0.7,
+        base64: false, // Không tốn RAM tạo base64 khổng lồ
       });
 
       if (!result.canceled && result.assets && result.assets.length > 0) {
@@ -476,10 +499,9 @@ export default function BreedScannerScreen() {
 
       const result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ['images'],
-        allowsEditing: true,
-        aspect: [1, 1],
-        quality: 0.8,
-        base64: true,
+        allowsEditing: false,
+        quality: 0.7,
+        base64: false,
       });
 
       if (!result.canceled && result.assets && result.assets.length > 0) {

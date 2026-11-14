@@ -24,6 +24,7 @@ import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
+import * as ImagePicker from 'expo-image-picker';
 
 import { useAppTheme } from '@/presentation/theme';
 import { useAuthStore } from '@/presentation/stores/useAuthStore';
@@ -73,6 +74,24 @@ export default function HomeScreen() {
   useEffect(() => {
     void loadPets();
   }, [loadPets]);
+
+  // Nếu hệ điều hành Android giải phóng bộ nhớ khi chụp ảnh và mở lại Home, tự động chuyển tiếp ảnh vào Scanner
+  useEffect(() => {
+    void (async () => {
+      try {
+        const pending = await ImagePicker.getPendingResultAsync();
+        if (pending && 'assets' in pending && !pending.canceled && pending.assets && pending.assets.length > 0) {
+          const asset = pending.assets[0];
+          router.push({
+            pathname: '/(app)/breed-scanner',
+            params: { autoScanUri: asset.uri },
+          });
+        }
+      } catch (e) {
+        // ignore
+      }
+    })();
+  }, []);
 
   useEffect(() => {
     if (pets.length > 0) {
