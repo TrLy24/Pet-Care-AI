@@ -68,7 +68,9 @@
     "web": "expo start --web",
     "lint": "expo lint",
     "typecheck": "tsc --noEmit",
-    "test": "jest --passWithNoTests"
+    "test": "jest --passWithNoTests",
+    "test:backend": "powershell -Command \"$env:PYTHONPATH='backend'; backend\\venv\\Scripts\\python -m unittest test_nutrition_rules test_nutrition_validation\"",
+    "test:all": "npm test && npm run test:backend"
   },
   "private": true,
   "jest": {
